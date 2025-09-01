@@ -1,0 +1,137 @@
+---
+title: "NIH model MCMC downsampling"
+author: "Zeynep Hasgul"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(data.table)
+library(dplyr)
+library(tidyverse)
+library(readxl)
+
+
+
+```
+
+
+```{r setup, include=FALSE}
+
+
+
+
+ file_path <- "C:/Users/path/calibration_MC_MCMC_sample.tab"
+
+# Read the tab-separated file
+df <- fread(file_path, check.names = FALSE)
+
+
+
+```
+
+
+```{r }
+
+# Random sampling
+df_sample <- df[sample(.N, 10000)]
+
+
+# Add simulations num as the LAST column
+#df_sample[, simseed := seq_len(.N)]
+
+# Drop entirely NA columns
+df_sample <- df_sample[, which(unlist(lapply(df_sample, function(x) !all(is.na(x))))), with = FALSE]
+
+# Drop duplicate-named columns (keep the first occurrence)
+dup_cols <- names(df_sample)[duplicated(names(df_sample))]
+if (length(dup_cols)) df_sample[, (dup_cols) := NULL]
+
+
+# Check result
+head(df_sample)
+
+
+```
+
+```{r }
+
+# pick numeric columns (skip seed if present)
+num_cols <- setdiff(names(df_sample)[vapply(df_sample, is.numeric, logical(1))], "simseed")
+
+
+# vectorized smart formatter
+format_smart <- function(x, digits_fixed = 1, digits_sci = 1, big_mark = ",") {
+  out <- rep(NA_character_, length(x))
+
+  sel_fixed <- !is.na(x) & abs(x) >= 1
+  sel_sci   <- !is.na(x) & abs(x) <  1
+
+  # fixed for |x| >= 1
+  out[sel_fixed] <- formatC(x[sel_fixed], format = "f", digits = digits_fixed, big.mark = big_mark)
+
+  # scientific only for |x| < 1
+  out[sel_sci]   <- formatC(x[sel_sci],   format = "e", digits = digits_sci)
+
+  # nice handling for exact zeros (show 0.00 instead of 0.00e+00)
+  out[!is.na(x) & x == 0] <- formatC(0, format = "f", digits = digits_fixed)
+
+  out
+}
+
+
+# compute stats
+summary_table <- melt(
+  df_sample[, ..num_cols],
+  measure.vars = num_cols,
+  variable.name = "column",
+  value.name   = "value"
+)[
+  , .(
+    mean = mean(value, na.rm = TRUE),
+    p5   = as.numeric(quantile(value, 0.025, na.rm = TRUE)),
+    p95  = as.numeric(quantile(value, 0.975, na.rm = TRUE))
+  ),
+  by = column
+]
+
+# combine as: mean (p5, p95) with smart formatting
+summary_table[, result := paste0(
+  format_smart(mean), " (", format_smart(p5), ", ", format_smart(p95), ")"
+)]
+
+# keep tidy output
+summary_table <- summary_table[, .(column, result)]
+summary_table
+
+```
+
+
+
+
+```{r }
+
+
+# Save as tab-delimited
+fwrite(
+  df_sample,
+  file = "NIH_MC_MCMC_sample_frac.tab",
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+
+# Save the sampled data as a CSV
+fwrite(df_sample, "NIH_MC_MCMC_sample_frac.csv", row.names = FALSE, quote = FALSE)
+
+write.xlsx(summary_table, file = "MCMC_summary_table.xlsx", rowNames = FALSE)
+
+
+
+```

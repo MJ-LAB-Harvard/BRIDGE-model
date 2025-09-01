@@ -1,0 +1,684 @@
+---
+title: "Result fig"
+author: "Zeynep Hasgul"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(scales) 
+library(patchwork)
+
+
+
+
+
+raw_data <-  read_excel("C:/Users/path/Data for result figure.xlsx", sheet = "Extreme")
+
+
+names(raw_data)[1] <- "variable"
+
+
+
+
+
+```
+
+
+```{r}
+
+
+
+keep_entities <- c("PI","Postdoc","Student","Papers","Drugs","Cumulative")
+
+# Clean, keep only the six entities
+df <- raw_data %>%
+  rename(variable = 1) %>%                                    # make sure we have `variable`
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>%
+  mutate(
+    year = suppressWarnings(as.numeric(year)),
+    Scenario = case_when(
+      str_detect(variable, regex("\\bbase\\b", ignore_case = TRUE))    ~ "Base",
+      str_detect(variable, regex("\\bextreme\\b", ignore_case = TRUE)) ~ "Aggressive growth",
+      TRUE ~ NA_character_
+    ),
+    # strip trailing scenario token to form a clean label
+    label = str_trim(str_remove(
+      variable,
+      regex("\\s+(base|extreme|aggressive\\s+growth)\\s*$", ignore_case = TRUE)
+    )),
+    # keep entity ONLY if it starts with one of the six
+    entity = case_when(
+      str_detect(label, regex(
+        paste0("^(", paste(keep_entities, collapse = "|"), ")\\b"),
+        ignore_case = TRUE
+      )) ~ str_extract(label, regex(
+        paste0("^(", paste(keep_entities, collapse = "|"), ")"),
+        ignore_case = TRUE
+      )),
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(Scenario)) %>%      # keep only rows with a scenario
+  filter(!is.na(entity)) %>%        # DROP everything not in the six entities
+  select(entity, Scenario, year, value, label)
+
+
+base_updated <- df %>%
+  filter(Scenario == "Base") %>%
+  mutate(value = if_else(year > 2026, value, NA_real_))
+
+extreme_updated <- df %>%
+  filter(Scenario == "Aggressive growth") %>%
+  mutate(value = if_else(year > 2026, value, NA_real_))
+
+# --- Step 2: Combine ---
+df_long <- bind_rows(historic_rows, base_updated, extreme_updated) %>%
+  mutate(order = if_else(Scenario == "Aggressive growth", 2L, 1L)) %>%
+  arrange(type, entity, order)
+
+```
+
+
+
+```{r}
+
+
+scenario_cols <- c(
+  "Base"     = "#7F7F7F",
+  "Aggressive growth"  = "darkgreen",
+  "Historic" = "#7F7F7F"
+)
+
+scenario_lty <- c(
+  "Base"     = "dotted",
+  "Aggressive growth"  = "solid",
+  "Historic" = "solid"
+)
+
+scenario_alpha <- c(
+  "Base"     = 1,
+  "Aggressive growth"  = 0.8,
+  "Historic" = 1
+)
+
+
+y_step      <- 20e9
+y_min       <- 10e9
+y_max_data  <- max(df_long$value[df_long$type %in% c("Nominal","Adjusted")], na.rm = TRUE)
+y_upper     <- ceiling((y_max_data * 1.10) / y_step) * y_step   # 10% headroom, round up to 10B
+y_limits    <- c(y_min, y_upper)
+y_breaks    <- seq(y_min, y_upper, by = y_step)
+
+# ---- NOMINAL plot ----
+p_nominal <- ggplot() +
+  # Historic (not in legend)
+  geom_line(
+    data = df_long %>% filter(type == "Nominal", Scenario == "Historic"),
+    aes(x = year, y = value, group = Scenario),
+    color = scenario_cols["Historic"],
+    linetype = scenario_lty["Historic"],
+    linewidth = 1.2, alpha = scenario_alpha["Historic"],
+    show.legend = FALSE
+  ) +
+  # Base & Aggressive growth
+  geom_line(
+    data = df_long %>% filter(type == "Nominal", Scenario %in% c("Base","Aggressive growth")),
+    aes(x = year, y = value, color = Scenario, linetype = Scenario, alpha = Scenario, group = Scenario),
+    linewidth = 1, na.rm = TRUE
+  ) +
+  scale_color_manual(
+    name   = "Scenario",
+    values = scenario_cols[c("Base","Aggressive growth")],
+    guide  = guide_legend(override.aes = list(alpha = 1))
+  ) +
+  scale_linetype_manual(
+    name   = "Scenario",
+    values = scenario_lty[c("Base","Aggressive growth")]
+  ) +
+  scale_alpha_manual(
+    values = scenario_alpha[c("Base","Aggressive growth")],
+    guide  = "none"
+  ) +
+  scale_y_continuous(
+    limits = y_limits,
+    breaks = y_breaks,
+    labels = scales::label_number(scale = 1e-9, suffix = "B")
+  ) +
+  scale_x_continuous(limits = c(1995, 2050), breaks = seq(1995, 2050, by = 5)) +
+  labs(
+    title = "A) Nominal annual congressional appropriations",
+    x = "Year", y = "NIH budget (in Billion USD)"
+  ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# ---- ADJUSTED plot ----
+p_adjusted <- ggplot() +
+  # Historic (not in legend)
+  geom_line(
+    data = df_long %>% filter(type == "Adjusted", Scenario == "Historic"),
+    aes(x = year, y = value, group = Scenario),
+    color = scenario_cols["Historic"],
+    linetype = scenario_lty["Historic"],
+    linewidth = 1.2, alpha = scenario_alpha["Historic"],
+    show.legend = FALSE
+  ) +
+  # Base & Aggressive growth
+  geom_line(
+    data = df_long %>% filter(type == "Adjusted", Scenario %in% c("Base","Aggressive growth")),
+    aes(x = year, y = value, color = Scenario, linetype = Scenario, alpha = Scenario, group = Scenario),
+    linewidth = 1, na.rm = TRUE
+  ) +
+  scale_color_manual(
+    name   = "Scenario",
+    values = scenario_cols[c("Base","Aggressive growth")],
+    guide  = guide_legend(override.aes = list(alpha = 1))
+  ) +
+  scale_linetype_manual(
+    name   = "Scenario",
+    values = scenario_lty[c("Base","Aggressive growth")]
+  ) +
+  scale_alpha_manual(
+    values = scenario_alpha[c("Base","Aggressive growth")],
+    guide  = "none"
+  ) +
+  scale_y_continuous(
+    limits = y_limits,
+    breaks = y_breaks,
+    labels = scales::label_number(scale = 1e-9, suffix = "B")
+  ) +
+  scale_x_continuous(limits = c(1995, 2050), breaks = seq(1995, 2050, by = 5)) +
+  labs(
+    title = "B) Annual congressional appropriations adjusted to 2025 USD",
+    x = "Year", y = "NIH budget (in 2025 USD)"
+  ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+
+
+
+```{r fig.width=6, fig.height=6}
+
+# ---- Combine & show (one shared legend: Base vs Extreme) ----
+extreme_budget <- p_nominal / p_adjusted +
+  plot_layout(guides = "collect") &
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.text = element_text(size = 10),
+    legend.margin = margin(t = 2, b = 2, unit = "pt")
+  ) &
+  guides(color = guide_legend(nrow = 1, byrow = TRUE))
+
+print(extreme_budget)
+
+```
+
+
+
+```{r}
+
+ggsave(
+  filename = "extreme_budgets.svg",
+  plot = extreme_budget,
+  width = 6,     
+  height = 6,     
+  units = "in",
+  dpi = 300
+)
+
+
+```
+
+
+
+```{r}
+
+
+# ───────────────────────────────
+# 2  Panel-specific axis limits, labels & titles
+# ───────────────────────────────
+custom_axes <- tribble(
+  ~entity,   ~y_min, ~y_max, ~y_breaks, ~y_label,              ~plot_title,
+  "PI",         5000,   50000, NA,       "People",              "A) Principal Investigators with active NIH grants",
+  "Postdoc",    10000,  120000, NA,       "People",              "B) Postdoctoral researchers",
+  "Student",   100000,  300000, NA,       "People",              "C) Doctoral students",
+  "Papers",      10000,  120000, NA,       "Papers / year",       "D) NIH-supported fundamental-research papers",
+  "Drugs",          0,      70, NA,       "Approvals / year",    "E) Annual novel drugs approved"
+)
+
+# colours / linetypes / alpha for Base, Aggressive growth, Historic
+scenario_cols  <- c("Base"     = "#7F7F7F",
+                    "Aggressive growth"  = "darkgreen",
+                    "Historic" = "#7F7F7F")
+
+scenario_types <- c("Base"     = "dotted",
+                    "Aggressive growth"  = "solid",
+                    "Historic" = "solid")
+
+scenario_alpha <- c("Base"     = 1,
+                    "Aggressive growth"  = 0.8,
+                    "Historic" = 1)
+
+
+```
+
+
+
+```{r fig.width=6, fig.height=6}
+# ───────────────────────────────
+# Helper to return one time-series panel (A–E)
+
+
+# ───────────────────────────────
+make_entity_plot <- function(entity_name, show_legend = FALSE) {
+  dat <- df_long %>% dplyr::filter(entity == entity_name)
+  ax  <- custom_axes %>% dplyr::filter(entity == entity_name)
+
+  # Dynamic headroom: if data exceeds table y_max, bump the upper limit
+  data_max <- suppressWarnings(max(dat$value, na.rm = TRUE))
+  if (!is.finite(data_max)) data_max <- ax$y_max
+  y_upper  <- max(ax$y_max, ceiling(data_max * 1.10))  # 10% headroom
+
+  ggplot() +
+    # Historic (grey, not in legend)
+    geom_line(
+      data = dat %>% dplyr::filter(Scenario == "Historic"),
+      aes(year, value, group = Scenario),
+      colour   = scenario_cols["Historic"],
+      linetype = scenario_types["Historic"],
+      linewidth = 1.2,
+      alpha    = scenario_alpha["Historic"],
+      show.legend = FALSE
+    ) +
+    # Base vs Aggressive growth
+    geom_line(
+      data = dat %>% dplyr::filter(Scenario %in% c("Base","Aggressive growth")),
+      aes(year, value, colour = Scenario, linetype = Scenario, alpha = Scenario),
+      linewidth = 1, na.rm = TRUE
+    ) +
+    # Legend only for Base/Aggressive growth
+    scale_color_manual(
+      name   = "Scenario",
+      values = scenario_cols[c("Base","Aggressive growth")],
+      guide  = guide_legend(override.aes = list(alpha = 1))
+    ) +
+    scale_linetype_manual(
+      name   = "Scenario",
+      values = scenario_types[c("Base","Aggressive growth")]
+    ) +
+    scale_alpha_manual(
+      values = scenario_alpha[c("Base","Aggressive growth")],
+      guide  = "none"
+    ) +
+    scale_y_continuous(
+      limits = c(ax$y_min, y_upper),
+      breaks = if (is.na(ax$y_breaks)) waiver() else ax$y_breaks,
+      labels = scales::label_comma()
+    ) +
+    scale_x_continuous(limits = c(1995, 2050), breaks = seq(1995, 2050, 5)) +
+    labs(title = ax$plot_title, x = NULL, y = ax$y_label) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      legend.position = if (show_legend) "bottom" else "none"
+    )
+}
+
+# ───────────────────────────────
+# Build panels A–E and assemble
+# ───────────────────────────────
+entities <- custom_axes$entity
+plots    <- purrr::map(entities, make_entity_plot)
+
+# Carry the legend on panel A only
+plots[[1]] <- make_entity_plot(entities[1], show_legend = TRUE) +
+              guides(linetype = "none", alpha = "none")  # keep colour legend only
+
+# If you have a panel F (bar of shortfall), append it here:
+# plots <- c(plots, list(plot_F))
+
+library(patchwork)
+final_plot <- wrap_plots(plots, ncol = 2) +
+              plot_layout(guides = "collect") &
+              theme(legend.position = "bottom")
+
+print(final_plot)
+
+```
+
+```{r}
+# ───────────────────────────────
+# F) Cumulative shortfall (Base vs Aggressive growth only)
+# ───────────────────────────────
+df2_long <- raw_data %>% 
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>% 
+  mutate(
+    year     = as.numeric(year),
+    Scenario = case_when(
+      str_detect(variable, regex("\\bbase\\b",    ignore_case = TRUE)) ~ "Base",
+      str_detect(variable, regex("\\bextreme\\b", ignore_case = TRUE)) ~ "Aggressive growth",
+      TRUE ~ NA_character_
+    )
+  ) %>% 
+  filter(str_detect(variable, regex("^cumulative", ignore_case = TRUE))) %>% 
+  filter(!is.na(Scenario), year == 2050)
+
+base_total <- df2_long %>% filter(Scenario == "Base") %>% pull(value)
+
+shortfalls <- df2_long %>% 
+  filter(Scenario == "Aggressive growth") %>% 
+  mutate(shortfall = value - base_total) %>% 
+  mutate(Scenario = factor(Scenario, levels = c("Aggressive growth")))
+
+# keep the lower tick from ever going above 0
+low_tick <- min(0, floor(min(shortfalls$shortfall, na.rm = TRUE) / 50) * 50)
+
+plot_F <- ggplot(shortfalls, aes(x = Scenario, y = shortfall, fill = Scenario)) +
+  geom_col(width = 0.7, show.legend = FALSE) +
+  scale_y_continuous(
+    limits = c(low_tick, 0),
+    breaks = seq(low_tick, 0, by = 50),
+    expand = c(0, 0),
+    labels = scales::comma
+  ) +
+  scale_x_discrete(position = "top") +
+  scale_fill_manual(values = rep("#006400", length(unique(shortfalls$Scenario)))) +  # dark green
+  geom_hline(yintercept = 0, colour = "grey25", linewidth = 0.8) +
+  labs(title = "F) Cumulative novel-drug shortfall", x = NULL, y = "Lost drugs (2026 - 2050)") +
+  theme_classic(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0),
+    panel.grid = element_blank(), axis.ticks = element_blank(),
+    axis.text.y = element_text(margin = margin(r = 4))
+  )
+
+```
+
+
+
+
+```{r }
+
+# ───────────────────────────────
+# 6  Assemble A–F
+# ───────────────────────────────
+suppress_guides <- function(p) {
+  p + guides(colour  = "none",
+             linetype = "none",
+             alpha    = "none",
+             fill     = "none")
+}
+
+plots <- vector("list", length(entities))
+plots[[1]] <- make_entity_plot(entities[1], show_legend = TRUE) +
+              guides(linetype = "none", alpha = "none")
+
+for (i in 2:length(entities)) {
+  plots[[i]] <- suppress_guides(make_entity_plot(entities[i], show_legend = FALSE))
+}
+
+# Append panel F
+plots <- c(plots, list(plot_F))
+
+extreme_result_plot <- wrap_plots(plots, ncol = 2) +
+              plot_layout(guides = "collect") &
+              theme(legend.position = "bottom")
+
+
+
+```
+
+```{r fig.width=10, fig.height=8}
+
+
+print(extreme_result_plot)
+
+```
+
+
+```{r}
+
+ggsave(
+  filename = "extreme_result_plot.svg",
+  plot = extreme_result_plot,
+  width = 10,     
+  height = 8,     
+  units = "in",
+  dpi = 300
+)
+
+
+```
+
+
+
+```{r}
+
+keep_entities <- c("PI","Postdoc","Student","Papers","Drugs","Cumulative")
+
+pct_change_2050 <- raw_data %>% 
+  rename(variable = 1) %>%
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>% 
+  mutate(
+    year = suppressWarnings(as.numeric(year)),
+
+    # Identify scenario
+    Scenario = case_when(
+      str_detect(variable, regex("\\bbase\\b",    ignore_case = TRUE)) ~ "Base",
+      str_detect(variable, regex("\\bextreme\\b", ignore_case = TRUE)) ~ "Aggressive growth",
+      TRUE ~ NA_character_
+    ),
+
+    # Clean label: remove trailing scenario token
+    label = str_trim(str_remove(
+      variable,
+      regex("\\s+(base|extreme|aggressive\\s+growth)\\s*$", ignore_case = TRUE)
+    )),
+
+    # Entity only if label starts with one of the six; else NA
+    entity = case_when(
+      str_detect(label, regex(
+        paste0("^(", paste(keep_entities, collapse = "|"), ")\\b"),
+        ignore_case = TRUE
+      )) ~ str_extract(label, regex(
+        paste0("^(", paste(keep_entities, collapse = "|"), ")"),
+        ignore_case = TRUE
+      )),
+      TRUE ~ NA_character_
+    )
+  ) %>% 
+  filter(year == 2050, !is.na(Scenario), !is.na(entity)) %>% 
+  group_by(entity) %>% 
+  mutate(
+    base_2050 = value[Scenario == "Base"][1],
+    pct_change = if_else(!is.na(base_2050) & base_2050 != 0,
+                         (value - base_2050) / base_2050 * 100,
+                         NA_real_)
+  ) %>% 
+  ungroup() %>% 
+  filter(Scenario == "Aggressive growth") %>%       # Extreme vs Base only
+  select(entity, Scenario, pct_change) %>% 
+  arrange(entity)
+
+pct_change_2050
+
+
+
+# ── 2) Percent time-series data (Extreme vs Base, 2025–2050) ───────────────────
+df_pct <- raw_data %>% 
+  rename(variable = 1) %>% 
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>% 
+  mutate(
+    year = suppressWarnings(as.numeric(year)),
+    # Scenario (case-insensitive)
+    Scenario = case_when(
+      str_detect(variable, regex("\\bbase\\b",    ignore_case = TRUE)) ~ "Base",
+      str_detect(variable, regex("\\bextreme\\b", ignore_case = TRUE)) ~ "Aggressive growth",
+      TRUE ~ NA_character_
+    ),
+    # Clean label: remove trailing scenario token(s)
+    label = str_trim(str_remove(
+      variable,
+      regex("\\s+(base|extreme|aggressive\\s+growth)\\s*$", ignore_case = TRUE)
+    )),
+    # entity only if it starts with one of the six
+    entity = case_when(
+      str_detect(label, regex(
+        paste0("^(", paste(keep_entities, collapse = "|"), ")\\b"),
+        ignore_case = TRUE
+      )) ~ str_extract(label, regex(
+        paste0("^(", paste(keep_entities, collapse = "|"), ")"),
+        ignore_case = TRUE
+      )),
+      TRUE ~ NA_character_
+    )
+  ) %>% 
+  # keep years 2025–2050, valid scenarios, and only the six entities
+  filter(!is.na(Scenario), !is.na(entity), year >= 2025, year <= 2050) %>% 
+  group_by(entity, year) %>% 
+  mutate(
+    baseline_value = value[Scenario == "Base"][1],
+    scenario_value = value,
+    diff     = scenario_value - baseline_value,
+    pct_diff = if_else(!is.na(baseline_value) & baseline_value != 0,
+                       diff / baseline_value * 100,
+                       NA_real_)
+  ) %>% 
+  ungroup() %>% 
+  # keep only Extreme series for plotting; remove this line if you want Base rows too
+  filter(Scenario == "Aggressive growth") %>% 
+  select(entity, year, Scenario, scenario_value, baseline_value, diff, pct_diff) %>% 
+  arrange(entity, year)
+
+```
+
+```{r}
+
+# reuse your existing colours/linetypes if already defined; otherwise:
+if (!exists("scenario_cols")) {
+  scenario_cols  <- c("Base"="#7F7F7F","Aggressive growth"="darkgreen","Historic"="#7F7F7F")
+  scenario_types <- c("Base"="dotted","Aggressive growth"="solid","Historic"="solid")
+  scenario_alpha <- c("Base"=1,"Aggressive growth"=0.8,"Historic"=1)
+}
+
+
+
+
+# custom axes definition
+custom_axes <- tibble::tribble(
+  ~entity,     ~y_min, ~y_max, ~y_breaks,                ~y_label,              ~plot_title,
+  "PI",           -40,     30,   seq(-40, 30, 10),        "% change from base", "Principal Investigators",
+  "Postdoc",      -40,     30,   seq(-40, 30, 10),        "% change from base", "Postdoctoral researchers",
+  "Student",      -40,     30,   seq(-40, 30, 10),        "% change from base", "Doctoral students",
+  "Papers",       -40,     30,   seq(-40, 30, 10),        "% change from base", "NIH-supported papers",
+  "Drugs",        -40,     30,   seq(-40, 30, 10),        "% change from base", "Novel drug approvals",
+  "Cumulative",   -40,     30,   seq(-40, 30, 10),        "% change from base", "Cumulative drugs (2026–2050)"
+)
+
+make_pct_plot <- function(entity_name, show_legend = FALSE) {
+  dat <- df_pct %>% dplyr::filter(entity == entity_name)
+  if (nrow(dat) == 0) return(NULL)
+
+  # axis lookup: prefer custom_axes if present
+  ax <- custom_axes %>% dplyr::filter(entity == entity_name)
+  if (nrow(ax) == 0) {
+    # fallback: auto compute if not in custom_axes
+    ax <- tibble::tibble(
+      y_min      = floor(min(dat$pct_diff, na.rm = TRUE) / 10) * 10,
+      y_max      = ceiling(max(dat$pct_diff, na.rm = TRUE) / 10) * 10,
+      y_breaks   = list(NA),
+      y_label    = "% change from base",
+      plot_title = entity_name
+    )
+  }
+
+  y_min  <- ax$y_min[[1]]
+  y_max  <- ax$y_max[[1]]
+  y_brks <- ax$y_breaks[[1]]
+  y_lab  <- ax$y_label[[1]]
+  title  <- ax$plot_title[[1]]
+
+  # drop unused levels and build scales
+  dat <- dat %>% dplyr::mutate(Scenario = droplevels(factor(Scenario)))
+  present <- unique(dat$Scenario) %>% as.character()
+  col_vals   <- scenario_cols[present]
+  type_vals  <- scenario_types[present]
+  alpha_vals <- scenario_alpha[present]
+
+  ggplot2::ggplot(dat, ggplot2::aes(
+    x = year, y = pct_diff,
+    colour   = Scenario,
+    linetype = Scenario,
+    alpha    = Scenario,
+    group    = Scenario
+  )) +
+    ggplot2::geom_line(size = 1, na.rm = TRUE) +
+    ggplot2::geom_hline(yintercept = 0, colour = "grey25", linewidth = 0.8, linetype = "dashed") +
+    ggplot2::scale_color_manual(name = "Scenario", values = col_vals,
+                                guide = ggplot2::guide_legend(override.aes = list(alpha = 1))) +
+    ggplot2::scale_linetype_manual(name = "Scenario", values = type_vals) +
+    ggplot2::scale_alpha_manual(values = alpha_vals, guide = "none") +
+    ggplot2::scale_y_continuous(
+      limits = c(y_min, y_max),
+      breaks = if (all(is.na(y_brks))) ggplot2::waiver() else y_brks,
+      labels = function(x) paste0(x, "%")
+    ) +
+    ggplot2::scale_x_continuous(limits = c(2025, 2050), breaks = seq(2025, 2050, 5)) +
+    ggplot2::labs(title = title, x = "Year", y = y_lab) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      plot.title      = ggplot2::element_text(hjust = 0.5, face = "bold"),
+      legend.position = if (show_legend) "bottom" else "none"
+    )
+}
+
+
+```
+
+```{r fig.width=10, fig.height=8}
+
+
+# ── 4) Build the grid and show/save ────────────────────────────────────────────
+entities      <- pct_axes$entity
+pct_plots_raw <- map(entities, make_pct_plot, show_legend = FALSE)
+pct_plots     <- purrr::compact(pct_plots_raw)
+
+# put the legend on the first real panel
+if (length(pct_plots) > 0) {
+  pct_plots[[1]] <- pct_plots[[1]] + guides(linetype = "none", alpha = "none")
+}
+
+percent_extreme <- wrap_plots(pct_plots, ncol = 2) +
+                plot_layout(guides = "collect") &
+                theme(legend.position = "bottom")
+
+print(percent_extreme)
+
+
+```
+
+```{r}
+
+ggsave(
+  filename = "percent_extreme.svg",
+  plot = percent_extreme,
+  width = 10,     
+  height = 8,     
+  units = "in",
+  dpi = 300
+)
+
+
+```

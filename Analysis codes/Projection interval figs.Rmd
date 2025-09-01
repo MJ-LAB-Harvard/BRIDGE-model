@@ -1,0 +1,305 @@
+---
+title: "Result sensitivity figs for supplement"
+author: "Zeynep Hasgul"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(scales) 
+library(patchwork)
+library(tidyverse)
+library(janitor)
+library(svglite)
+
+
+
+
+file_path1 <- "C:/Users/path/basesens.csv"
+file_path2 <- "C:/Users/path/lowbasesens.csv"
+file_path3 <- "C:/Users/path/1yrsens.csv"
+file_path4 <- "C:/Users/path/4yrsens.csv"
+file_path5 <- "C:/Users/path/extremesens.csv"
+file_path6 <- "C:/Users/path/cutsens.csv"
+
+
+# Read the tab-separated file
+df_base <- fread(file_path1, check.names = FALSE)
+df_low <- fread(file_path2, check.names = FALSE)
+df_1yr <- fread(file_path3, check.names = FALSE)
+df_4yr <- fread(file_path4, check.names = FALSE)
+df_extreme <- fread(file_path5, check.names = FALSE)
+df_cut<- fread(file_path6, check.names = FALSE)
+
+
+```
+
+
+
+```{r}
+
+# ---------- time mapping ----------
+base_year <- 1995
+step_year <- 0.125  # T step = 0.125 years
+
+
+
+keep_phrases <- c(
+  "total first time and established investigators",
+  "post docs",
+  "doctoral students",
+  "nih supported fundamental knowledge development",
+  "annual commercial innovations"
+)
+
+
+
+```
+
+
+```{r}
+
+
+# helper: summarize all columns (q025, mean, q975) fast
+summarize_all_cols <- function(DT) {
+  setDT(DT)
+  # compute over every column
+  q025 <- sapply(DT, function(x) quantile(suppressWarnings(as.numeric(x)), 0.025, na.rm = TRUE))
+  mn   <- sapply(DT, function(x) mean(    suppressWarnings(as.numeric(x)),        na.rm = TRUE))
+  q975 <- sapply(DT, function(x) quantile(suppressWarnings(as.numeric(x)), 0.975, na.rm = TRUE))
+  data.table(col = names(DT),
+             q025 = as.numeric(q025),
+             mean = as.numeric(mn),
+             q975 = as.numeric(q975))
+}
+
+
+
+# helper: keep only wanted phrases, parse T + digits + measure, and add time
+filter_and_long <- function(S) {
+  # keep only columns whose NAMES contain any of the keep phrases
+  keep_rx <- paste(keep_phrases, collapse = "|")
+  S2 <- S[ grepl(keep_rx, col, ignore.case = TRUE) ]
+
+  # parse "T" + digits + the rest (measure name)
+  # e.g., "T265 Post docs" -> time_index=265, measure_raw="Post docs"
+  m <- str_match(S2$col, "(?i)^\\s*t\\s*(\\d+)\\s*(.*)$")
+  S2[, time_index := as.integer(m[,2])]
+  S2[, measure_raw := str_squish(m[,3])]
+
+  # add fractional year; drop rows where T couldn't be parsed
+  S2 <- S2[!is.na(time_index)]
+  S2[, year := base_year + step_year * time_index]
+
+  # tidy columns / order
+  setcolorder(S2, c("measure_raw", "time_index", "year", "q025", "mean", "q975", "col"))
+  setorder(S2, measure_raw, time_index)
+  S2[]
+}
+
+
+```
+
+
+
+```{r}
+
+
+# ===================== df_base =====================
+# 1) summarize all columns
+base_all <- summarize_all_cols(df_base)
+# 2) keep phrases + 3) long time axis
+base_summ <- filter_and_long(base_all)
+
+# ===================== df_low ======================
+low_all   <- summarize_all_cols(df_low)
+low_summ  <- filter_and_long(low_all)
+
+# ===================== df_1yr ======================
+yr1_all   <- summarize_all_cols(df_1yr)
+yr1_summ  <- filter_and_long(yr1_all)
+
+# ===================== df_4yr ======================
+yr4_all   <- summarize_all_cols(df_4yr)
+yr4_summ  <- filter_and_long(yr4_all)
+
+# ===================== df_extreme ==================
+ext_all   <- summarize_all_cols(df_extreme)
+extreme_summ <- filter_and_long(ext_all)
+
+
+# ===================== df_extreme ==================
+cut_all   <- summarize_all_cols(df_cut)
+cut_summ <- filter_and_long(cut_all)
+
+
+```
+
+```{r}
+
+# ---------- mapping from measure text -> entity (matches axes_table$entity) ----------
+normalize_measure <- function(x) {
+  x <- gsub("_", " ", x)
+  x <- sub("(?i)\\s*total\\s*$", "", x, perl = TRUE)  # drop trailing "total"
+  x <- trimws(x)
+  tolower(x)
+}
+
+map_df <- data.frame(
+  measure_key = tolower(c(
+    "total first time and established investigators",
+    "post docs",
+    "doctoral students",
+    "nih supported fundamental knowledge development",
+    "annual commercial innovations"
+  )),
+  entity = c("PI","Postdoc","Student","Papers","Drugs"),
+  stringsAsFactors = FALSE
+)
+
+
+axes_table <- tibble::tribble(
+  ~entity,            ~y_min, ~y_max,  ~y_breaks,        ~y_label,          ~plot_title,
+  "PI",                   0,   50000, list(NA),       "People",          "A) Principal Investigators with active NIH grants",
+  "Postdoc",             0,  120000, list(NA),       "People",          "B) Postdoctoral researchers",
+  "Student",            0,  400000, list(NA),       "People",          "C) Doctoral students",
+  "Papers",              0,  150000, list(NA),       "Papers / year",   "D) NIH-supported fundamental-research papers",
+  "Drugs",                   0,      60, list(NA),       "Approvals / year","E) Annual novel drugs approved"
+)
+
+# ---------- small helper to prep one *_summ for plotting ----------
+prep_for_plot <- function(summ_dt) {
+  # add mapping to entity and attach axis meta (limits, labels, titles)
+  summ_dt$measure_key <- normalize_measure(summ_dt$measure_raw)
+  out <- merge(summ_dt, map_df, by = "measure_key", all.x = TRUE, all.y = FALSE)
+  out <- merge(out, as.data.frame(axes_table), by = "entity", all.x = TRUE, all.y = FALSE)
+  # keep order of panels as in axes_table
+  out$entity <- factor(out$entity, levels = axes_table$entity)
+  out
+}
+
+# ---------- panel builder (one panel per entity; mean + 95% ribbon) ----------
+
+
+
+
+build_panels <- function(dfp) {
+  panels <- list()
+  dfp$entity <- factor(dfp$entity, levels = axes_table$entity)
+
+  # global x range and 5-year ticks
+  x_start <- 1995
+  x_end   <- ceiling(max(dfp$year, na.rm = TRUE) / 5) * 5
+  x_ticks <- seq(x_start, x_end, by = 5)
+
+  for (ent in levels(dfp$entity)) {
+    dat <- dfp[dfp$entity == ent & !is.na(dfp$entity), ]
+    if (nrow(dat) == 0) next
+
+    ax <- axes_table[axes_table$entity == ent, ]
+    brks <- if (length(ax$y_breaks[[1]]) == 1 && is.na(ax$y_breaks[[1]])) waiver() else ax$y_breaks[[1]]
+
+    p <- ggplot(dat, aes(x = year)) +
+      geom_ribbon(aes(ymin = q025, ymax = q975), alpha = 0.20, fill = panel_color) +
+      geom_line(aes(y = mean), linewidth = 1, color = panel_color) +
+      geom_vline(xintercept = 2026, linetype = "dashed", color = "grey40", linewidth = 0.6) +
+      scale_y_continuous(
+        limits = c(ax$y_min, ax$y_max),
+        breaks = brks,
+        labels = label_comma(accuracy = 1)
+      ) +
+      scale_x_continuous(
+      limits = c(x_start, x_end),
+      breaks = x_ticks,                 # every 10 years
+      labels = scales::label_number(    # <- no thousands separator
+        accuracy = 1,
+        big.mark = "",                  # don't insert "1 995"
+        decimal.mark = "."
+      ),
+      minor_breaks = NULL,
+      expand = expansion(mult = c(0.01, 0.02))
+    )+
+      labs(title = ax$plot_title, x = "Year", y = ax$y_label) +
+      theme_classic(base_size = 9) +
+      theme(
+        plot.title = element_text(size = 12, face = "bold", hjust = 0),
+        axis.title = element_text(size = 9),
+        axis.text  = element_text(size = 9),
+        legend.position = "none"
+      )
+
+    panels[[ent]] <- p
+  }
+  wrap_plots(panels, ncol = 2)
+}
+
+
+
+```
+
+
+```{r fig.width=11, fig.height=8}
+
+
+# ================= plot: BASE =================
+
+panel_color <- "#7F7F7F"
+base_plot_df <- prep_for_plot(base_summ)
+fig_base <- build_panels(base_plot_df)
+print(fig_base)
+
+# ================= plot: LOW ==================
+panel_color <- "#9A6AFF"
+low_plot_df <- prep_for_plot(low_summ)
+fig_low <- build_panels(low_plot_df)
+print(fig_low)
+
+# ================= plot: 1YR ==================
+panel_color <- "#00B972"
+yr1_plot_df <- prep_for_plot(yr1_summ)
+fig_1yr <- build_panels(yr1_plot_df)
+print(fig_1yr)
+
+# ================= plot: 4YR ==================
+panel_color <- "#4DA6FF"
+yr4_plot_df <- prep_for_plot(yr4_summ)
+fig_4yr <- build_panels(yr4_plot_df)
+print(fig_4yr)
+
+# ================= plot: EXTREME ==============
+panel_color <-  "darkgreen"
+ext_plot_df <- prep_for_plot(extreme_summ)
+fig_extreme <- build_panels(ext_plot_df)
+print(fig_extreme)
+
+# ================= plot: cut ==============
+panel_color <- "#FF8543" 
+cut_plot_df <- prep_for_plot(cut_summ)
+fig_cut <- build_panels(cut_plot_df)
+print(fig_cut)
+
+
+
+```
+
+
+
+
+```{r}
+
+
+ggsave("base.svg",    fig_base,    device = svglite, width = 11, height = 8, units = "in", bg = "white")
+ggsave("low.svg",     fig_low,     device = svglite, width = 11, height = 8, units = "in", bg = "white")
+ggsave("1yr.svg",     fig_1yr,     device = svglite, width = 11, height = 8, units = "in", bg = "white")
+ggsave("4yr.svg",     fig_4yr,     device = svglite, width = 11, height = 8, units = "in", bg = "white")
+ggsave("extreme.svg", fig_extreme, device = svglite, width = 11, height = 8, units = "in", bg = "white")
+ggsave("cut.svg",     fig_cut,     device = svglite, width = 11, height = 8, units = "in", bg = "white")
+
+```
+

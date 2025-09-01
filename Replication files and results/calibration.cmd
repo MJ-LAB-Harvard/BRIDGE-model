@@ -1,0 +1,20 @@
+
+SPECIAL>NOINTERACTION
+SPECIAL>LOADMODEL|NIH-model_capacity.mdl
+SIMULATE>SETVAL|FINAL TIME=2025
+SIMULATE>READCIN|calibration2.out
+
+
+SIMULATE>payoff|payoff.vpd
+SIMULATE>optparm|optcontrol.voc
+SIMULATE>savelist|
+SIMULATE>senssavelist|
+
+
+
+
+SIMULATE>RUNNAME|calibration2
+SIMULATE>REPORT|1
+MENU>RUN_OPTIMIZE|o
+
+

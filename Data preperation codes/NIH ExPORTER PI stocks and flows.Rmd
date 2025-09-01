@@ -1,0 +1,465 @@
+---
+title: "NIH ExPORTER Data Analysis"
+author: "Zeynep Hasgul"
+date: "2025-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+library(ggplot2)
+library(scales)
+
+
+data_files <- "C:\\Users\\path"
+
+```
+
+Activity codes for research project grants and organizational codes for NIH funding institutes, 
+```{r}
+rpg_codes <- c(
+  "DP1","DP2","DP3","DP4","DP5",
+  "P01","PN1","PM1",
+  "R00","R01","R03","R15","R16","R21","R22","R23","R29","R33","R34","R35","R36","R37","R50","R55","R56","R61",
+  "RC1","RC2","RC3","RC4","RF1",
+  "RL1","RL2","RL9","RM1","SI2",
+  "UA5","UC1","UC2","UC3","UC4","UC7","UF1","UG3",
+  "UH2","UH3","UH5","UM1","UM2",
+  "U01","U19","U34","U3R"
+)
+
+organizational_codes <- c(
+  "TW", "TR", "AT", "CA", "EY", "HG", "HL", "AG", "AA", "AI", "AR", "EB", 
+  "HD", "DA", "DC", "DE", "DK", "ES", "GM", "MH", "MD", "NS", "NR", "LM"
+)
+```
+
+Import and bind all csv files.
+```{r}
+# Get file path of all data files
+data_files_list <- list.files(path = data_files, pattern = "^RePORTER_PRJ_C_FY\\d{4}\\.csv$", full.names = TRUE)
+
+# Read and bind all files
+NIH_data <- data_files_list %>%
+  set_names() %>%
+  map_dfr(~ suppressWarnings(read_csv(.x, col_types = cols(.default = "c")))) %>% 
+  mutate(FY = as.integer(FY))  %>%
+  filter(ACTIVITY %in% rpg_codes) %>%
+  filter(ADMINISTERING_IC %in% organizational_codes)
+```
+
+Filter needed rows and clean
+```{r}
+# ─────────────────────────────────────────────────────────────
+# 0.  Read + keep only needed columns
+# ─────────────────────────────────────────────────────────────
+NIH_data_clean <- NIH_data %>% 
+  select(CORE_PROJECT_NUM, PI_IDS,
+         APPLICATION_TYPE,    # 1 = new, 2 = competitive renewal
+         PROJECT_START, PROJECT_END, FY)
+
+# ────────────────────────────────────────────────────────────────
+# 1.  Clean PI_ID strings  (remove "(contact)", spaces, non‑digits)
+# ────────────────────────────────────────────────────────────────
+NIH_data_clean <- NIH_data_clean %>%
+  mutate(
+    PI_IDS = str_remove_all(PI_IDS,
+                            regex("\\(contact\\)", ignore_case = TRUE)),
+    PI_IDS = str_replace_all(PI_IDS, "[^0-9;,]", "")       # keep digits/;/
+  )
+
+# ─────────────────────────────────────────────────────────────
+# 2.  Fill missing project dates from sibling rows
+# ─────────────────────────────────────────────────────────────
+project_dates <- NIH_data_clean %>% 
+  filter(!is.na(PROJECT_START) & !is.na(PROJECT_END)) %>% 
+  distinct(CORE_PROJECT_NUM, .keep_all = TRUE) %>% 
+  select(CORE_PROJECT_NUM, PROJECT_START, PROJECT_END)
+
+NIH_data_clean <- NIH_data_clean %>% 
+  left_join(project_dates, by = "CORE_PROJECT_NUM", suffix = c("", "_fix")) %>% 
+  mutate(
+    PROJECT_START = coalesce(PROJECT_START, PROJECT_START_fix),
+    PROJECT_END   = coalesce(PROJECT_END,   PROJECT_END_fix)
+  ) %>% 
+  select(-ends_with("_fix"))
+
+# ─────────────────────────────────────────────────────────────
+# 3.  Parse date strings ➜ integer years
+# ─────────────────────────────────────────────────────────────
+NIH_data_clean <- NIH_data_clean %>% 
+  mutate(
+    START_YEAR = year(parse_date_time(PROJECT_START, orders = c("ymd", "mdy", "dmy"))),
+    END_YEAR   = year(parse_date_time(PROJECT_END,   orders = c("ymd", "mdy", "dmy")))
+  )
+
+# ─────────────────────────────────────────────────────────────
+# 4.  Split multi‑PI rows ➜ one row per PI × project‑FY
+# ─────────────────────────────────────────────────────────────
+df <- NIH_data_clean %>% 
+  separate_rows(PI_IDS, sep = "[;,]") %>% 
+  mutate(
+    PI_ID = str_remove_all(str_trim(PI_IDS), "[^0-9]")
+  ) %>% 
+  filter(PI_ID != "") %>% 
+  select(CORE_PROJECT_NUM, PI_ID, APPLICATION_TYPE,
+         FY, START_YEAR, END_YEAR) %>% 
+  distinct()
+
+# ─────────────────────────────────────────────────────────────
+# 5.  Basic consistency & date rescue
+# ─────────────────────────────────────────────────────────────
+
+# ── 1.  Project‑level lookup (treat all‑NA groups as NA, not Inf) ──────────
+proj_year_lookup <- df %>% 
+  group_by(CORE_PROJECT_NUM) %>% 
+  summarise(
+    proj_start_year = {x <- min(START_YEAR, na.rm = TRUE); if (is.infinite(x)) NA_integer_ else x},
+    proj_end_year   = {x <- max(END_YEAR,   na.rm = TRUE); if (is.infinite(x)) NA_integer_ else x},
+    .groups = "drop"
+  )
+
+# ── 2.  Join, fill, and COUNT rows we’re about to drop ─────────────────────
+df_clean <- df %>% 
+  left_join(proj_year_lookup, by = "CORE_PROJECT_NUM") %>% 
+  mutate(
+    START_YEAR = coalesce(START_YEAR, proj_start_year),
+    END_YEAR   = coalesce(END_YEAR,   proj_end_year)
+  ) %>% 
+  select(-proj_start_year, -proj_end_year)
+
+rows_before <- nrow(df_clean)
+
+df_clean <- df_clean %>% 
+  filter(!is.na(START_YEAR), !is.na(END_YEAR), END_YEAR >= START_YEAR) %>% 
+  arrange(CORE_PROJECT_NUM, PI_ID, FY) %>% 
+  distinct(CORE_PROJECT_NUM, PI_ID, FY, .keep_all = TRUE)
+
+rows_after  <- nrow(df_clean)
+rows_dropped <- rows_before - rows_after
+
+cat(sprintf(
+  "Dropped %d grant–PI–FY rows because start/end dates were missing or inconsistent.\n",
+  rows_dropped
+))
+
+# use df_clean for the rest of pipeline
+df <- df_clean
+```
+
+
+Define stock and flows and estimate number of 
+```{r fig.width=14, fig.height=4}
+# ─────────────────────────────────────────────────────────────
+# 6.  Parent‑grant & competitive‑segment table
+# ─────────────────────────────────────────────────────────────
+
+df <- df %>% 
+  mutate(parent_grant = str_extract(CORE_PROJECT_NUM, "^[A-Z0-9]+\\d{6}"))
+
+renewal_tbl <- df %>% 
+  filter(APPLICATION_TYPE %in% c(1, 2)) %>%    # new + competitive renewal
+  distinct(PI_ID, parent_grant, APPLICATION_TYPE, START_YEAR, END_YEAR)
+
+# ─────────────────────────────────────────────────────────────
+# 7.  First & second grant (second = first Type‑2 OR new serial)
+# ─────────────────────────────────────────────────────────────
+
+## A) First grant  (earliest Type 1 per PI)
+first_grant <- renewal_tbl %>% 
+  filter(APPLICATION_TYPE == 1) %>% 
+  group_by(PI_ID) %>% 
+  slice_min(order_by = START_YEAR, n = 1, with_ties = FALSE) %>% 
+  ungroup() %>% 
+  reframe(
+    PI_ID,
+    first_start = START_YEAR,
+    first_end   = END_YEAR,
+    first_parent = parent_grant
+  )
+
+## B) Candidate rows for "second event"
+second_event <- renewal_tbl %>% 
+  inner_join(first_grant, by = "PI_ID") %>% 
+  filter(
+    (APPLICATION_TYPE == 2) |                                   # first renewal
+    (APPLICATION_TYPE == 1 & parent_grant != first_parent)      # new serial
+  ) %>% 
+  filter(START_YEAR >= first_start) %>%                         # must be later
+  group_by(PI_ID) %>% 
+  slice_min(order_by = START_YEAR, n = 1, with_ties = FALSE) %>% 
+  ungroup() %>% 
+  reframe(
+    PI_ID,
+    second_start = START_YEAR
+  )
+
+## C) Combine → pi_key
+pi_key <- first_grant %>% 
+  select(PI_ID, first_start, first_end) %>% 
+  left_join(second_event, by = "PI_ID")
+
+# ─────────────────────────────────────────────────────────────
+# 8.  Study window
+# ─────────────────────────────────────────────────────────────
+yr_first <- min(df$START_YEAR)
+yr_last  <- max(df$END_YEAR)
+
+# ─────────────────────────────────────────────────────────────
+# 9.  Active‑year flag
+# ─────────────────────────────────────────────────────────────
+active_tbl <- df %>% 
+  mutate(year = map2(START_YEAR, END_YEAR, seq)) %>% 
+  unnest(year) %>% 
+  distinct(PI_ID, year) %>% 
+  mutate(is_active = TRUE)
+
+# ─────────────────────────────────────────────────────────────
+# 10.  Instant‑established (≥ 2 parent grants in first year)
+# ─────────────────────────────────────────────────────────────
+
+# unique_grants already keeps ONE row per PI × parent grant
+# (parent_grant = activity + 6‑digit serial)
+
+unique_grants <- df %>%
+  mutate(parent_grant = str_extract(CORE_PROJECT_NUM, "^[A-Z0-9]+\\d{6}")) %>%
+  distinct(PI_ID, parent_grant, START_YEAR)
+
+first_year_multigrant <- unique_grants %>%
+  group_by(PI_ID) %>%
+  reframe(
+    first_year            = min(START_YEAR, na.rm = TRUE),
+    n_parent_first_year   = sum(START_YEAR == min(START_YEAR, na.rm = TRUE))
+  ) %>%                                    # <- always ONE row per PI
+  filter(n_parent_first_year >= 2)
+
+multi_PIs <- first_year_multigrant$PI_ID   # now exists
+
+flow6 <- first_year_multigrant %>% 
+  count(year = first_year,
+        name = "flow6")
+
+# ─────────────────────────────────────────────────────────────
+# 11.  Timeline with tenure + multi‑first flags
+# ─────────────────────────────────────────────────────────────
+
+tenure_N <- 6L          # promote FTAP → EAP once PI has ≥6 active FTAP years
+
+# Identify “multi‑grant first‑year” investigators ---------------------
+multi_PIs <- df %>%                                   # grant‑level table
+  group_by(PI_ID) %>% 
+  mutate(first_year = min(START_YEAR, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(START_YEAR == first_year) %>%                # only first‑year grants
+  distinct(PI_ID, CORE_PROJECT_NUM) %>%               # remove dup rows
+  count(PI_ID, name = "n_grants_first_year") %>% 
+  filter(n_grants_first_year > 1) %>%                 # truly multi‑grant
+  pull(PI_ID)
+
+timeline_full <- pi_key %>% 
+  tidyr::crossing(year = yr_first:yr_last) %>% 
+  left_join(active_tbl, by = c("PI_ID", "year")) %>% 
+  mutate(
+    is_active       = tidyr::replace_na(is_active, FALSE),
+    is_first_year   = year == first_start,
+    yrs_in_career   = pmax(0L, year - first_start),
+    multi_first     = PI_ID %in% multi_PIs & is_first_year,
+    meets_tenure    = yrs_in_career >= tenure_N & is_active,
+
+    state = dplyr::case_when(
+      year < first_start                                       ~ "NONE",
+      multi_first                                              ~ "EAP",      # Flow 6
+      is_active & is_first_year                                ~ "FTAP",
+      is_active & meets_tenure                                 ~ "EAP",      # Flow 7
+      is_active & (is.na(second_start) | year < second_start)  ~ "FTAP",
+      is_active                                                ~ "EAP",
+      !is_active & year >= first_start                         ~ "NAPI",
+      TRUE                                                     ~ "NONE"
+    )
+  ) %>% 
+  dplyr::distinct(PI_ID, year, .keep_all = TRUE)               # 1 row / PI‑year
+
+# ─────────────────────────────────────────────────────────────
+# 12.  Stocks  (unique investigators per state)
+# ─────────────────────────────────────────────────────────────
+
+stock <- timeline_full %>% 
+  filter(state != "NONE") %>% 
+  summarise(n_stock = dplyr::n_distinct(PI_ID), .by = c(year, state)) %>% 
+  tidyr::pivot_wider(names_from = state,
+                     values_from = n_stock,
+                     values_fill = 0)
+
+# ─────────────────────────────────────────────────────────────
+# 13.  Flows 1–7
+# ─────────────────────────────────────────────────────────────
+
+flows <- timeline_full %>% 
+  arrange(PI_ID, year) %>% 
+  group_by(PI_ID) %>% 
+  mutate(
+    prev_state        = dplyr::lag(state),
+    prev_meets_tenure = dplyr::lag(meets_tenure,  default = FALSE)
+  ) %>% 
+  ungroup() %>% 
+  mutate(flow = dplyr::case_when(
+    # 1  New first‑time PI (NONE → FTAP)
+    prev_state == "NONE" & state == "FTAP"                           ~ "flow1",
+    # 2  FTAP loses funding (FTAP → NAPI)
+    prev_state == "FTAP" & state == "NAPI"                           ~ "flow2",
+    # 3  FTAP gains 2nd grant before tenure threshold (FTAP → EAP)
+    prev_state == "FTAP" & state == "EAP" & !prev_meets_tenure &
+      !meets_tenure                                                 ~ "flow3",
+    # 4  NAPI fills gap (NAPI → EAP)
+    prev_state == "NAPI" & state == "EAP"                            ~ "flow4",
+    # 5  Established PI loses all funding (EAP → NAPI)
+    prev_state == "EAP"  & state == "NAPI"                           ~ "flow5",
+    # 6  Multi‑grant first‑year entrant (NONE → EAP, multi_first flagged above)
+    prev_state == "NONE" & state == "EAP" & multi_first              ~ "flow6",
+    # 7  Tenure promotion (FTAP → EAP after ≥7 active FTAP years)
+    prev_state == "FTAP" & state == "EAP" & meets_tenure &
+      !prev_meets_tenure                                             ~ "flow7",
+    TRUE                                                             ~ NA_character_
+  )) %>% 
+  filter(!is.na(flow)) %>% 
+  summarise(n_flow = dplyr::n_distinct(PI_ID), .by = c(year, flow)) %>% 
+  tidyr::pivot_wider(names_from = flow,
+                     values_from = n_flow,
+                     values_fill = 0)
+
+# ─────────────────────────────────────────────────────────────
+# 14.  Master table  (stocks + flows 1‑7)
+# ─────────────────────────────────────────────────────────────
+results <- dplyr::full_join(stock, flows, by = "year") %>% 
+  arrange(year)
+
+print(results)
+```
+
+
+```{r fig.width=14, fig.height=4}
+# ──  PI‑year state uniqueness check  ──────────────────────────
+state_conflicts <- timeline_full %>% 
+  filter(state != "NONE") %>%                # ignore the pre‑career filler
+  summarise(
+    n_states = n_distinct(state),
+    .by = c(PI_ID, year)
+  ) %>% 
+  filter(n_states > 1)                       # keep only conflicts
+
+conflict_count <- nrow(state_conflicts)
+cat("PI‑year conflicts (multiple stocks in same year):", conflict_count, "\n")
+
+if (conflict_count > 0) {
+  print(head(state_conflicts, 20))           # show first few if any exist
+}
+
+```
+
+
+```{r fig.width=14, fig.height=5}
+plot_df <- results %>% 
+  filter(year >= 1995, year <= 2023) %>% 
+  pivot_longer(cols = -year,
+               names_to  = "metric",
+               values_to = "value")
+
+# ── 2.  Friendly labels ---------------------------------------------
+metric_labels <- c(
+  FTAP         = "Stock 1: First time Active PIs",
+  EAP          = "Stock 2: Established Active PIs",
+  NAPI         = "Stock3: Non active Prior PIs",
+  flow1        = "Flow 1: Becoming first time PI",
+  flow2        = "Flow 2: 1st grant ended\n→ Non‑active",
+  flow3        = "Flow 3: 2nd grant before gap\n→ Established",
+  flow4        = "Flow 4: Gap filled\n(Non active → Established)",
+  flow5        = "Flow 5: Established having funding gap",
+  flow6        = "Flow 6: Instant established",
+  flow7        = "Flow 7: Established by tenure"
+)
+
+# ── 3.  Faceted plot -------------------------------------------------
+ggplot(plot_df, aes(year, value)) +
+  geom_col(width = 0.8) +
+  facet_wrap(
+    ~ metric,
+    scales   = "free_y",
+    ncol     = 3,
+    labeller = as_labeller(metric_labels)
+  ) +
+  scale_x_continuous(breaks = seq(1995, 2023, 2)) +
+  scale_y_continuous(labels = scales::comma)+
+  labs(
+    title = "PI Stocks and Flows (1995 – 2023)",
+    x     = NULL,
+    y     = "Number of Investigators / Transitions"
+  ) +
+  
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+```{r fig.width=14, fig.height=4}
+readr::write_csv(results, "results_PI_stocks_flows_1995‑2023.csv")
+```
+
+```{r fig.width=14, fig.height=4}
+# ────────────────────────────────────────────────────────────────
+# 1.  How many active grants does each PI hold in each year?
+# ────────────────────────────────────────────────────────────────
+grant_counts <- df %>%                                    # grant‑level table
+  mutate(year = map2(START_YEAR, END_YEAR, seq)) %>% 
+  unnest(year) %>% 
+  count(PI_ID, year, name = "grant_count")                # 1 row per PI‑year
+
+# ────────────────────────────────────────────────────────────────
+# 2.  Established‑active PIs in the timeline (one row per PI‑year)
+# ────────────────────────────────────────────────────────────────
+estab_pis <- timeline_full %>% 
+  filter(state == "EAP") %>% 
+  select(PI_ID, year)
+
+# ────────────────────────────────────────────────────────────────
+# 3.  Join counts → compute proportion with a single grant
+# ────────────────────────────────────────────────────────────────
+eap_single <- estab_pis %>% 
+  left_join(grant_counts, by = c("PI_ID", "year")) %>% 
+  mutate(grant_count = replace_na(grant_count, 0L)) %>%  # safety, should be ≥1
+  summarise(
+    n_eap_total   = n_distinct(PI_ID),                   # established PIs
+    n_single_eap  = n_distinct(PI_ID[grant_count == 1]),
+    pct_single_eap = n_single_eap / n_eap_total,
+    .by = year
+  )
+
+
+# ──  Plot -------------------------------------------------------------
+eap_single %>% 
+  filter(year >= 1995, year <= 2023) %>% 
+  ggplot(aes(year, pct_single_eap)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = seq(1995, 2023, 2)) +
+  labs(
+    title = "Established Active PIs Relying on a Single Grant",
+    x     = NULL,
+    y     = "Percent of EAP PIs"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+```{r fig.width=14, fig.height=4}
+readr::write_csv(eap_single, "eap_single_1995‑2023.csv")
+```

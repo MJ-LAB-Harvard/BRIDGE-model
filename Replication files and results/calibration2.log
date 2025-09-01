@@ -1,0 +1,595 @@
+Initial point of search.
+  base grad school leave rate  = 0.0001.
+  base doctoral enrollment  = 26373.9.
+  base post doc duration  = 3.33583.
+  post doc transition to faculty fraction  = 0.703371.
+  strength of job availability on post docs to go to academia  = 0.0001.
+  avg time in industry research positions  = 23.8693.
+  base rate to receive initial awards   = 0.0651657.
+  base rate to receive following awards  = 0.147874.
+  base publication per grant per year   = 10.8364.
+  fraction of trials that succeed   = 0.0225362.
+  trial per grant per year  = 0.0264749.
+  trials per billion USD investment  = 12.566.
+  post doc position utilization  = 0.917254.
+  faculty capacity utilization   = 0.95.
+  industry capacity utilization   = 0.941511.
+  initial commercial innovations  = 140.352.
+  initial industry clinical trials  = 1.01566.
+  post doc position growth rate = 0.32478.
+  academic position growth rate = 0.147428.
+  industry position growth rate  = 0.0147132.
+  avg trial duration industry  = 4.55364.
+  NIH avg trial duration  = 6.8141.
+  commercial innovation strength on positions  = 3.
+  strength of commercial innovation on investment  = 1.46227.
+  fundamental research strength on clinical research  = 0.589443.
+  strength of perceived job prospect on enrollment  = 1.25076.
+  strength of job availability on new grads going to industry = 0.547772.
+  strength of faculty position availability on faculty placement from doctoral  = 0.292713.
+  strength of job availability on duration  = 0.127541.
+  strength of NIH funding on non PI faculty to leave research  = 0.001.
+  strength of grant availability on PI career start   = 0.43272.
+  strength of grant availability on career establishment  = 0.249844.
+  strength of established faculty transition to industry  = 2.9643.
+  faculty availability strength on fundamental research  = 1.36087.
+  trainee availability strength on fundamental research  = 0.541552.
+  faculty availability strength on clinical research  = 0.001.
+  trainee availability strength on clinical research  = 0.001.
+  strength of industry researcher availability on clinical research  = 0.00101846.
+  strength of workload on productivity   = 0.00105007.
+  NIH initial clinical trials = 5000.
+  avg grant duration  = 3.8387.
+  avg time to become obsolete   = 17.1646.
+  initial grants   = 29377.1.
+  initial non PI faculty researchers   = 49857.7.
+  initial prior PI  = 10126.4.
+  base rate for funding gap after first grant  = 0.110552.
+  base rate for established PI funding gap  = 0.011521.
+  base rate to receive multiple awards at first year   = 0.0077204.
+  base rate for established PI by grant duration    = 0.039703.
+  base rate for return to PI  = 0.0361309.
+  base established PI industry transition rate  = 0.00012795.
+  base established PI exit rate  = 0.0001.
+  base non PI faculty exit rate  = 0.108306.
+  base prior PI exit rate  = 0.0165472.
+  applications per first time PI  = 4.91947.
+  applications per established PI  = 2.3317.
+  fraction of established contacts that apply  = 0.110958.
+  fraction of potential first time contacts that apply  = 0.0384814.
+  scaling factor to adjust multi PI grants with both first time and established PIs  = 1.01064.
+  first time PI grant success rate strength  = 0.106202.
+  established PI grant success rate strength  = 0.325571.
+  base rate to receive multiple awards at first year  = 0.0077204.
+  strength of NIH funding on first time PI faculty to receive multiple awards  = 0.767092.
+  strength of grant availability on having funding gap  = 1.17491.
+  strength of NIH funding on non active PI faculty exit  = 0.0001.
+  strength of grant application workload on productivity for NIH researchers  = 0.50338.
+  strength of active commitments on productivity  = 0.194724.
+  strength of grant availability on becoming nonactive after first grant   = 0.0001.
+  strength of trainer availability on enrollment  = 0.1.
+  strength of complexity on new innovations  = 3.
+  strength of learning  = 2.41123.
+  delay for learning  = 28.6653.
+  publication delay = 9.22299.
+  fundamental research translation delay = 5.
+  academia funding strength on positions  = 0.0001.
+  post doc funding strength on positions  = 1.92233.
+  strength of NIH funding on receiving follow up awards  = 0.154973.
+  inital NIH supported fundamental studies   = 163049.
+  strength of post doc position availability on post doc placement from doctoral  = 3.
+Simulations = 1.
+Optimizations = 1.
+Pass = 0.
+Payoff = -855.279.
+---------------------------------.
+Maximum payoff found at:.
+ *base grad school leave rate  = 0.0001.
+ *base doctoral enrollment  = 26369.9.
+ *base post doc duration  = 3.35652.
+ *post doc transition to faculty fraction  = 0.701648.
+ *strength of job availability on post docs to go to academia  = 0.0001.
+ *avg time in industry research positions  = 23.7883.
+ *base rate to receive initial awards   = 0.0653966.
+ *base rate to receive following awards  = 0.150611.
+ *base publication per grant per year   = 10.8155.
+ *fraction of trials that succeed   = 0.0226368.
+ *trial per grant per year  = 0.0257145.
+ *trials per billion USD investment  = 12.2719.
+ *post doc position utilization  = 0.917588.
+ *faculty capacity utilization   = 0.95.
+ *industry capacity utilization   = 0.941116.
+ *initial commercial innovations  = 138.969.
+ *initial industry clinical trials  = 1.
+ *post doc position growth rate = 0.324679.
+ *academic position growth rate = 0.145966.
+ *industry position growth rate  = 0.0151783.
+ *avg trial duration industry  = 4.55857.
+ *NIH avg trial duration  = 6.83463.
+ *commercial innovation strength on positions  = 3.
+ *strength of commercial innovation on investment  = 1.45285.
+ *fundamental research strength on clinical research  = 0.60386.
+ *strength of perceived job prospect on enrollment  = 1.26233.
+ *strength of job availability on new grads going to industry = 0.574386.
+ *strength of faculty position availability on faculty placement from doctoral  = 0.299527.
+ *strength of job availability on duration  = 0.140748.
+ *strength of NIH funding on non PI faculty to leave research  = 0.001.
+ *strength of grant availability on PI career start   = 0.433764.
+ *strength of grant availability on career establishment  = 0.247643.
+ *strength of established faculty transition to industry  = 2.99961.
+ *faculty availability strength on fundamental research  = 1.341.
+ *trainee availability strength on fundamental research  = 0.563088.
+ *faculty availability strength on clinical research  = 0.001.
+ *trainee availability strength on clinical research  = 0.001.
+ *strength of industry researcher availability on clinical research  = 0.001.
+ *strength of workload on productivity   = 0.001.
+ *NIH initial clinical trials = 5000.
+ *avg grant duration  = 3.83855.
+ *avg time to become obsolete   = 17.0357.
+ *initial grants   = 29375.6.
+ *initial non PI faculty researchers   = 50006.1.
+ *initial prior PI  = 10357.6.
+ *base rate for funding gap after first grant  = 0.110486.
+ *base rate for established PI funding gap  = 0.0115318.
+ *base rate to receive multiple awards at first year   = 0.0077204.
+ *base rate for established PI by grant duration    = 0.0396124.
+ *base rate for return to PI  = 0.0355855.
+ *base established PI industry transition rate  = 0.0001186.
+ *base established PI exit rate  = 0.0001.
+ *base non PI faculty exit rate  = 0.10782.
+ *base prior PI exit rate  = 0.0160897.
+ *applications per first time PI  = 4.89604.
+ *applications per established PI  = 2.34242.
+ *fraction of established contacts that apply  = 0.110234.
+ *fraction of potential first time contacts that apply  = 0.0383813.
+ *scaling factor to adjust multi PI grants with both first time and established PIs  = 1.01481.
+ *first time PI grant success rate strength  = 0.110251.
+ *established PI grant success rate strength  = 0.322007.
+ *base rate to receive multiple awards at first year  = 0.0077204.
+ *strength of NIH funding on first time PI faculty to receive multiple awards  = 0.764451.
+ *strength of grant availability on having funding gap  = 1.17198.
+ *strength of NIH funding on non active PI faculty exit  = 0.0001.
+ *strength of grant application workload on productivity for NIH researchers  = 0.509617.
+ *strength of active commitments on productivity  = 0.179865.
+ *strength of grant availability on becoming nonactive after first grant   = 0.0001.
+ *strength of trainer availability on enrollment  = 0.1.
+ *strength of complexity on new innovations  = 3.
+ *strength of learning  = 2.43055.
+ *delay for learning  = 28.7534.
+ *publication delay = 9.23013.
+ *fundamental research translation delay = 5.
+ *academia funding strength on positions  = 0.0001.
+ *post doc funding strength on positions  = 1.89421.
+ *strength of NIH funding on receiving follow up awards  = 0.166861.
+ *inital NIH supported fundamental studies   = 162155.
+ *strength of post doc position availability on post doc placement from doctoral  = 3.
+Simulations = 51228.
+Optimizations = 1.
+Pass = 3.
+Payoff = -854.8.
+---------------------------------.
+This Search                   	Pass 1      	Final       .
+Simulations                   	42104       	51228       .
+Iterations                    	108         	136         .
+ base grad school leave rate  	0.0001      	0.0001      .
+ base doctoral enrollment     	26367.051   	26369.917   .
+ base post doc duration       	3.3603286   	3.3565168   .
+ post doc transition to faculty fraction 	0.70081356  	0.7016479   .
+ strength of job availability on post docs to go to academia 	0.0001      	0.0001      .
+ avg time in industry research positions 	23.836333   	23.788272   .
+ base rate to receive initial awards  	0.065444822 	0.065396602 .
+ base rate to receive following awards 	0.15309571  	0.15061068  .
+ base publication per grant per year  	10.820507   	10.815513   .
+ fraction of trials that succeed  	0.022636768 	0.022636768 .
+ trial per grant per year     	0.025752316 	0.025714518 .
+ trials per billion USD investment 	12.271947   	12.271947   .
+ post doc position utilization 	0.91762397  	0.91758803  .
+ faculty capacity utilization  	0.94999999  	0.94999999  .
+ industry capacity utilization  	0.94111992  	0.94111571  .
+ initial commercial innovations 	139.00703   	138.96925   .
+ initial industry clinical trials 	1           	1           .
+ post doc position growth rate	0.32488173  	0.32467878  .
+ academic position growth rate	0.14574305  	0.14596638  .
+ industry position growth rate 	0.015179179 	0.015178291 .
+ avg trial duration industry  	4.5635172   	4.558568    .
+ NIH avg trial duration       	6.8507596   	6.8346335   .
+ commercial innovation strength on positions 	3           	3           .
+ strength of commercial innovation on investment 	1.4531573   	1.4528489   .
+ fundamental research strength on clinical research 	0.60335096  	0.60386049  .
+ strength of perceived job prospect on enrollment 	1.2547157   	1.2623276   .
+ strength of job availability on new grads going to industry	0.5781975   	0.5743864   .
+ strength of faculty position availability on faculty placement from doctoral 	0.29749209  	0.29952708  .
+ strength of job availability on duration 	0.1376224   	0.14074838  .
+ strength of NIH funding on non PI faculty to leave research 	0.001       	0.001       .
+ strength of grant availability on PI career start  	0.43303401  	0.43376441  .
+ strength of grant availability on career establishment 	0.24865454  	0.2476429   .
+ strength of established faculty transition to industry 	3           	2.9996056   .
+ faculty availability strength on fundamental research 	1.362918    	1.341002    .
+ trainee availability strength on fundamental research 	0.52170327  	0.56308758  .
+ faculty availability strength on clinical research 	0.001       	0.001       .
+ trainee availability strength on clinical research 	0.001       	0.001       .
+ strength of industry researcher availability on clinical research 	0.001       	0.001       .
+ strength of workload on productivity  	0.001       	0.001       .
+ NIH initial clinical trials  	5000        	5000        .
+ avg grant duration           	3.8385473   	3.8385473   .
+ avg time to become obsolete  	17.098469   	17.035658   .
+ initial grants               	29375.623   	29375.631   .
+ initial non PI faculty researchers  	50005.077   	50006.079   .
+ initial prior PI             	10387.578   	10357.607   .
+ base rate for funding gap after first grant 	0.11052106  	0.11048558  .
+ base rate for established PI funding gap 	0.011531757 	0.011531757 .
+ base rate to receive multiple awards at first year  	0.0077204001	0.0077204001.
+ base rate for established PI by grant duration   	0.03962552  	0.039612362 .
+ base rate for return to PI   	0.035585526 	0.035585526 .
+ base established PI industry transition rate 	0.00011860031	0.00011860031.
+ base established PI exit rate 	0.0001      	0.0001      .
+ base non PI faculty exit rate 	0.10777548  	0.10781956  .
+ base prior PI exit rate      	0.016125399 	0.01608966  .
+ applications per first time PI 	4.9061951   	4.8960426   .
+ applications per established PI 	2.347771    	2.3424162   .
+ fraction of established contacts that apply 	0.11023357  	0.11023357  .
+ fraction of potential first time contacts that apply 	0.038381297 	0.038381297 .
+ scaling factor to adjust multi PI grants with both first time and established PIs 	1.0145229   	1.0148055   .
+ first time PI grant success rate strength 	0.10975128  	0.11025054  .
+ established PI grant success rate strength 	0.32041446  	0.32200716  .
+ base rate to receive multiple awards at first year 	0.0077204001	0.0077204001.
+ strength of NIH funding on first time PI faculty to receive multiple awards 	0.76394046  	0.7644509   .
+ strength of grant availability on having funding gap 	1.1715988   	1.1719802   .
+ strength of NIH funding on non active PI faculty exit 	0.0001      	0.0001      .
+ strength of grant application workload on productivity for NIH researchers 	0.51411655  	0.50961739  .
+ strength of active commitments on productivity 	0.17503388  	0.1798646   .
+ strength of grant availability on becoming nonactive after first grant  	0.0001      	0.0001      .
+ strength of trainer availability on enrollment 	0.1         	0.1         .
+ strength of complexity on new innovations 	2.9986409   	3           .
+ strength of learning         	2.4133251   	2.4305535   .
+ delay for learning           	28.697531   	28.753363   .
+ publication delay            	9.2750352   	9.2301272   .
+ fundamental research translation delay	5           	5           .
+ academia funding strength on positions 	0.0001      	0.0001      .
+ post doc funding strength on positions 	1.8769256   	1.8942137   .
+ strength of NIH funding on receiving follow up awards 	0.17942515  	0.16686069  .
+ inital NIH supported fundamental studies  	162916.07   	162155.41   .
+ strength of post doc position availability on post doc placement from doctoral 	3           	3           .
+Payoff                        	-854.88231  	-854.79969  .
+==============================.
+Initial point of search.
+ *base grad school leave rate  = 0.0838302.
+ *base doctoral enrollment  = 26329.4.
+ *base post doc duration  = 8.93989.
+ *post doc transition to faculty fraction  = 0.559248.
+ *strength of job availability on post docs to go to academia  = 2.23092.
+ *avg time in industry research positions  = 7.13906.
+ *base rate to receive initial awards   = 0.306485.
+ *base rate to receive following awards  = 0.554161.
+ *base publication per grant per year   = 12.6287.
+ *fraction of trials that succeed   = 0.00896632.
+ *trial per grant per year  = 1.02317.
+ *trials per billion USD investment  = 789.664.
+ *post doc position utilization  = 0.642756.
+ *faculty capacity utilization   = 0.909298.
+ *industry capacity utilization   = 0.905021.
+ *initial commercial innovations  = 1075.41.
+ *initial industry clinical trials  = 1255.58.
+ *post doc position growth rate = 0.326963.
+ *academic position growth rate = 0.0245976.
+ *industry position growth rate  = 0.336825.
+ *avg trial duration industry  = 3.04623.
+ *NIH avg trial duration  = 2.42638.
+ *commercial innovation strength on positions  = 0.82837.
+ *strength of commercial innovation on investment  = 1.12212.
+ *fundamental research strength on clinical research  = 0.849845.
+ *strength of perceived job prospect on enrollment  = 1.95913.
+ *strength of job availability on new grads going to industry = 1.53137.
+ *strength of faculty position availability on faculty placement from doctoral  = 2.53514.
+ *strength of job availability on duration  = 0.235299.
+ *strength of NIH funding on non PI faculty to leave research  = 0.241319.
+ *strength of grant availability on PI career start   = 1.83009.
+ *strength of grant availability on career establishment  = 1.33123.
+ *strength of established faculty transition to industry  = 1.15048.
+ *faculty availability strength on fundamental research  = 0.108464.
+ *trainee availability strength on fundamental research  = 2.99029.
+ *faculty availability strength on clinical research  = 0.656551.
+ *trainee availability strength on clinical research  = 2.65394.
+ *strength of industry researcher availability on clinical research  = 0.102595.
+ *strength of workload on productivity   = 0.417494.
+ *NIH initial clinical trials = 2261.14.
+ *avg grant duration  = 1.68665.
+ *avg time to become obsolete   = 5.44682.
+ *initial grants   = 19603.1.
+ *initial non PI faculty researchers   = 55504.9.
+ *initial prior PI  = 42219.7.
+ *base rate for funding gap after first grant  = 0.37625.
+ *base rate for established PI funding gap  = 0.76224.
+ *base rate to receive multiple awards at first year   = 0.0239009.
+ *base rate for established PI by grant duration    = 0.0969789.
+ *base rate for return to PI  = 0.422171.
+ *base established PI industry transition rate  = 0.0932965.
+ *base established PI exit rate  = 0.0534454.
+ *base non PI faculty exit rate  = 0.123692.
+ *base prior PI exit rate  = 0.315139.
+ *applications per first time PI  = 4.5605.
+ *applications per established PI  = 8.39149.
+ *fraction of established contacts that apply  = 0.292771.
+ *fraction of potential first time contacts that apply  = 0.253002.
+ *scaling factor to adjust multi PI grants with both first time and established PIs  = 1.91073.
+ *first time PI grant success rate strength  = 1.14118.
+ *established PI grant success rate strength  = 0.0593789.
+ *base rate to receive multiple awards at first year  = 0.183691.
+ *strength of NIH funding on first time PI faculty to receive multiple awards  = 0.781379.
+ *strength of grant availability on having funding gap  = 0.138917.
+ *strength of NIH funding on non active PI faculty exit  = 1.84489.
+ *strength of grant application workload on productivity for NIH researchers  = 1.13041.
+ *strength of active commitments on productivity  = 0.284851.
+ *strength of grant availability on becoming nonactive after first grant   = 0.806268.
+ *strength of trainer availability on enrollment  = 0.232015.
+ *strength of complexity on new innovations  = 2.86642.
+ *strength of learning  = 0.938975.
+ *delay for learning  = 13.1962.
+ *publication delay = 4.39613.
+ *fundamental research translation delay = 26.1418.
+ *academia funding strength on positions  = 1.91497.
+ *post doc funding strength on positions  = 0.199216.
+ *strength of NIH funding on receiving follow up awards  = 1.76335.
+ *inital NIH supported fundamental studies   = 99012.6.
+ *strength of post doc position availability on post doc placement from doctoral  = 0.851139.
+Simulations = 51229.
+Optimizations = 2.
+Pass = 3.
+Payoff = -1.41908e+15.
+---------------------------------.
+Question from Vensim
+   Do you want to do a final simulation? Clicking 'No' will abort and discard the results so far.?.
+Maximum payoff found at:.
+  base grad school leave rate  = 0.0001.
+  base doctoral enrollment  = 26369.9.
+  base post doc duration  = 3.35652.
+  post doc transition to faculty fraction  = 0.701648.
+  strength of job availability on post docs to go to academia  = 0.0001.
+  avg time in industry research positions  = 23.7883.
+  base rate to receive initial awards   = 0.0653966.
+  base rate to receive following awards  = 0.150611.
+  base publication per grant per year   = 10.8155.
+  fraction of trials that succeed   = 0.0226368.
+  trial per grant per year  = 0.0257145.
+  trials per billion USD investment  = 12.2719.
+  post doc position utilization  = 0.917588.
+  faculty capacity utilization   = 0.95.
+  industry capacity utilization   = 0.941116.
+  initial commercial innovations  = 138.969.
+  initial industry clinical trials  = 1.
+ *post doc position growth rate = 0.324679.
+  academic position growth rate = 0.145966.
+  industry position growth rate  = 0.0151783.
+  avg trial duration industry  = 4.55857.
+  NIH avg trial duration  = 6.83463.
+  commercial innovation strength on positions  = 3.
+  strength of commercial innovation on investment  = 1.45285.
+  fundamental research strength on clinical research  = 0.60386.
+  strength of perceived job prospect on enrollment  = 1.26233.
+  strength of job availability on new grads going to industry = 0.574386.
+  strength of faculty position availability on faculty placement from doctoral  = 0.299527.
+  strength of job availability on duration  = 0.140748.
+  strength of NIH funding on non PI faculty to leave research  = 0.001.
+  strength of grant availability on PI career start   = 0.433764.
+  strength of grant availability on career establishment  = 0.247643.
+  strength of established faculty transition to industry  = 2.99961.
+  faculty availability strength on fundamental research  = 1.341.
+  trainee availability strength on fundamental research  = 0.563088.
+  faculty availability strength on clinical research  = 0.001.
+  trainee availability strength on clinical research  = 0.001.
+  strength of industry researcher availability on clinical research  = 0.001.
+  strength of workload on productivity   = 0.001.
+  NIH initial clinical trials = 5000.
+  avg grant duration  = 3.83855.
+  avg time to become obsolete   = 17.0357.
+  initial grants   = 29375.6.
+  initial non PI faculty researchers   = 50006.1.
+  initial prior PI  = 10357.6.
+  base rate for funding gap after first grant  = 0.110486.
+  base rate for established PI funding gap  = 0.0115318.
+  base rate to receive multiple awards at first year   = 0.0077204.
+  base rate for established PI by grant duration    = 0.0396124.
+  base rate for return to PI  = 0.0355855.
+  base established PI industry transition rate  = 0.0001186.
+  base established PI exit rate  = 0.0001.
+  base non PI faculty exit rate  = 0.10782.
+  base prior PI exit rate  = 0.0160897.
+  applications per first time PI  = 4.89604.
+  applications per established PI  = 2.34242.
+  fraction of established contacts that apply  = 0.110234.
+  fraction of potential first time contacts that apply  = 0.0383813.
+  scaling factor to adjust multi PI grants with both first time and established PIs  = 1.01481.
+  first time PI grant success rate strength  = 0.110251.
+  established PI grant success rate strength  = 0.322007.
+  base rate to receive multiple awards at first year  = 0.0077204.
+  strength of NIH funding on first time PI faculty to receive multiple awards  = 0.764451.
+  strength of grant availability on having funding gap  = 1.17198.
+  strength of NIH funding on non active PI faculty exit  = 0.0001.
+  strength of grant application workload on productivity for NIH researchers  = 0.509617.
+  strength of active commitments on productivity  = 0.179865.
+  strength of grant availability on becoming nonactive after first grant   = 0.0001.
+  strength of trainer availability on enrollment  = 0.1.
+  strength of complexity on new innovations  = 3.
+  strength of learning  = 2.43055.
+  delay for learning  = 28.7534.
+  publication delay = 9.23013.
+  fundamental research translation delay = 5.
+  academia funding strength on positions  = 0.0001.
+  post doc funding strength on positions  = 1.89421.
+  strength of NIH funding on receiving follow up awards  = 0.166861.
+  inital NIH supported fundamental studies   = 162155.
+  strength of post doc position availability on post doc placement from doctoral  = 3.
+Simulations = 68598.
+Optimizations = 2.
+Pass = 2.
+Payoff = -854.8.
+---------------------------------.
+This Search                   	Pass 1      	Final       .
+Simulations                   	68598       	68598       .
+Iterations                    	23          	159         .
+ base grad school leave rate  	0.0001      	0.0001      .
+ base doctoral enrollment     	27047.884   	27047.884   .
+ base post doc duration       	1.6729182   	1.6729182   .
+ post doc transition to faculty fraction 	0.13042484  	0.13042484  .
+ strength of job availability on post docs to go to academia 	0.0001      	0.0001      .
+ avg time in industry research positions 	18.999449   	18.999449   .
+ base rate to receive initial awards  	1           	1           .
+ base rate to receive following awards 	0.12059997  	0.12059997  .
+ base publication per grant per year  	11.780463   	11.780463   .
+ fraction of trials that succeed  	0.011641772 	0.011641772 .
+ trial per grant per year     	0.34182727  	0.34182727  .
+ trials per billion USD investment 	793.93696   	793.93696   .
+ post doc position utilization 	0.8098375   	0.8098375   .
+ faculty capacity utilization  	0.70721103  	0.70721103  .
+ industry capacity utilization  	0.94949521  	0.94949521  .
+ initial commercial innovations 	53.967678   	53.967678   .
+ initial industry clinical trials 	299.04574   	299.04574   .
+ post doc position growth rate	0.24179161  	0.24179161  .
+ academic position growth rate	0.074285969 	0.074285969 .
+ industry position growth rate 	0.08059395  	0.08059395  .
+ avg trial duration industry  	3.1907557   	3.1907557   .
+ NIH avg trial duration       	6.5903984   	6.5903984   .
+ commercial innovation strength on positions 	0.15439712  	0.15439712  .
+ strength of commercial innovation on investment 	1.242286    	1.242286    .
+ fundamental research strength on clinical research 	0.32451366  	0.32451366  .
+ strength of perceived job prospect on enrollment 	0.37884109  	0.37884109  .
+ strength of job availability on new grads going to industry	2.7634988   	2.7634988   .
+ strength of faculty position availability on faculty placement from doctoral 	0.001       	0.001       .
+ strength of job availability on duration 	0.52831561  	0.52831561  .
+ strength of NIH funding on non PI faculty to leave research 	0.001       	0.001       .
+ strength of grant availability on PI career start  	0.81992358  	0.81992358  .
+ strength of grant availability on career establishment 	0.26351239  	0.26351239  .
+ strength of established faculty transition to industry 	0.001       	0.001       .
+ faculty availability strength on fundamental research 	1.2725529   	1.2725529   .
+ trainee availability strength on fundamental research 	0.84864834  	0.84864834  .
+ faculty availability strength on clinical research 	0.001       	0.001       .
+ trainee availability strength on clinical research 	0.001       	0.001       .
+ strength of industry researcher availability on clinical research 	3           	3           .
+ strength of workload on productivity  	1.8518607   	1.8518607   .
+ NIH initial clinical trials  	1004.481    	1004.481    .
+ avg grant duration           	3.8318892   	3.8318892   .
+ avg time to become obsolete  	5.0904385   	5.0904385   .
+ initial grants               	29681.331   	29681.331   .
+ initial non PI faculty researchers  	7742.6554   	7742.6554   .
+ initial prior PI             	44501.843   	44501.843   .
+ base rate for funding gap after first grant 	0.073010251 	0.073010251 .
+ base rate for established PI funding gap 	0.039727142 	0.039727142 .
+ base rate to receive multiple awards at first year  	0.023900909 	0.023900909 .
+ base rate for established PI by grant duration   	0.03872402  	0.03872402  .
+ base rate for return to PI   	0.013084203 	0.013084203 .
+ base established PI industry transition rate 	0.0001      	0.0001      .
+ base established PI exit rate 	0.0001      	0.0001      .
+ base non PI faculty exit rate 	0.5         	0.5         .
+ base prior PI exit rate      	0.0001      	0.0001      .
+ applications per first time PI 	1.1253028   	1.1253028   .
+ applications per established PI 	8.8291293   	8.8291293   .
+ fraction of established contacts that apply 	0.024562006 	0.024562006 .
+ fraction of potential first time contacts that apply 	0.33112578  	0.33112578  .
+ scaling factor to adjust multi PI grants with both first time and established PIs 	1.5279531   	1.5279531   .
+ first time PI grant success rate strength 	0.54878467  	0.54878467  .
+ established PI grant success rate strength 	0.0001      	0.0001      .
+ base rate to receive multiple awards at first year 	0.26648398  	0.26648398  .
+ strength of NIH funding on first time PI faculty to receive multiple awards 	1.6400722   	1.6400722   .
+ strength of grant availability on having funding gap 	0.26670832  	0.26670832  .
+ strength of NIH funding on non active PI faculty exit 	0.0001      	0.0001      .
+ strength of grant application workload on productivity for NIH researchers 	0.42422177  	0.42422177  .
+ strength of active commitments on productivity 	0.18097185  	0.18097185  .
+ strength of grant availability on becoming nonactive after first grant  	0.25654307  	0.25654307  .
+ strength of trainer availability on enrollment 	0.21338964  	0.21338964  .
+ strength of complexity on new innovations 	2.5765799   	2.5765799   .
+ strength of learning         	2.809878    	2.809878    .
+ delay for learning           	4.777675    	4.777675    .
+ publication delay            	8.6843287   	8.6843287   .
+ fundamental research translation delay	6.5393591   	6.5393591   .
+ academia funding strength on positions 	0.0001      	0.0001      .
+ post doc funding strength on positions 	2.3265154   	2.3265154   .
+ strength of NIH funding on receiving follow up awards 	0.037087044 	0.037087044 .
+ inital NIH supported fundamental studies  	55615.262   	55615.262   .
+ strength of post doc position availability on post doc placement from doctoral 	3           	3           .
+Payoff                        	-1413.4453  	-1413.4453  .
+==============================.
+Maximum of simulations/optimizations found at:.
+  base grad school leave rate  = 0.0001.
+  base doctoral enrollment  = 26369.9.
+  base post doc duration  = 3.35652.
+  post doc transition to faculty fraction  = 0.701648.
+  strength of job availability on post docs to go to academia  = 0.0001.
+  avg time in industry research positions  = 23.7883.
+  base rate to receive initial awards   = 0.0653966.
+  base rate to receive following awards  = 0.150611.
+  base publication per grant per year   = 10.8155.
+  fraction of trials that succeed   = 0.0226368.
+  trial per grant per year  = 0.0257145.
+  trials per billion USD investment  = 12.2719.
+  post doc position utilization  = 0.917588.
+  faculty capacity utilization   = 0.95.
+  industry capacity utilization   = 0.941116.
+  initial commercial innovations  = 138.969.
+  initial industry clinical trials  = 1.
+ *post doc position growth rate = 0.324679.
+  academic position growth rate = 0.145966.
+  industry position growth rate  = 0.0151783.
+  avg trial duration industry  = 4.55857.
+  NIH avg trial duration  = 6.83463.
+  commercial innovation strength on positions  = 3.
+  strength of commercial innovation on investment  = 1.45285.
+  fundamental research strength on clinical research  = 0.60386.
+  strength of perceived job prospect on enrollment  = 1.26233.
+  strength of job availability on new grads going to industry = 0.574386.
+  strength of faculty position availability on faculty placement from doctoral  = 0.299527.
+  strength of job availability on duration  = 0.140748.
+  strength of NIH funding on non PI faculty to leave research  = 0.001.
+  strength of grant availability on PI career start   = 0.433764.
+  strength of grant availability on career establishment  = 0.247643.
+  strength of established faculty transition to industry  = 2.99961.
+  faculty availability strength on fundamental research  = 1.341.
+  trainee availability strength on fundamental research  = 0.563088.
+  faculty availability strength on clinical research  = 0.001.
+  trainee availability strength on clinical research  = 0.001.
+  strength of industry researcher availability on clinical research  = 0.001.
+  strength of workload on productivity   = 0.001.
+  NIH initial clinical trials = 5000.
+  avg grant duration  = 3.83855.
+  avg time to become obsolete   = 17.0357.
+  initial grants   = 29375.6.
+  initial non PI faculty researchers   = 50006.1.
+  initial prior PI  = 10357.6.
+  base rate for funding gap after first grant  = 0.110486.
+  base rate for established PI funding gap  = 0.0115318.
+  base rate to receive multiple awards at first year   = 0.0077204.
+  base rate for established PI by grant duration    = 0.0396124.
+  base rate for return to PI  = 0.0355855.
+  base established PI industry transition rate  = 0.0001186.
+  base established PI exit rate  = 0.0001.
+  base non PI faculty exit rate  = 0.10782.
+  base prior PI exit rate  = 0.0160897.
+  applications per first time PI  = 4.89604.
+  applications per established PI  = 2.34242.
+  fraction of established contacts that apply  = 0.110234.
+  fraction of potential first time contacts that apply  = 0.0383813.
+  scaling factor to adjust multi PI grants with both first time and established PIs  = 1.01481.
+  first time PI grant success rate strength  = 0.110251.
+  established PI grant success rate strength  = 0.322007.
+  base rate to receive multiple awards at first year  = 0.0077204.
+  strength of NIH funding on first time PI faculty to receive multiple awards  = 0.764451.
+  strength of grant availability on having funding gap  = 1.17198.
+  strength of NIH funding on non active PI faculty exit  = 0.0001.
+  strength of grant application workload on productivity for NIH researchers  = 0.509617.
+  strength of active commitments on productivity  = 0.179865.
+  strength of grant availability on becoming nonactive after first grant   = 0.0001.
+  strength of trainer availability on enrollment  = 0.1.
+  strength of complexity on new innovations  = 3.
+  strength of learning  = 2.43055.
+  delay for learning  = 28.7534.
+  publication delay = 9.23013.
+  fundamental research translation delay = 5.
+  academia funding strength on positions  = 0.0001.
+  post doc funding strength on positions  = 1.89421.
+  strength of NIH funding on receiving follow up awards  = 0.166861.
+  inital NIH supported fundamental studies   = 162155.
+  strength of post doc position availability on post doc placement from doctoral  = 3.
+Simulations = 68598.
+Optimizations = 2.
+Pass = 2.
+Payoff = -854.8.
+---------------------------------.

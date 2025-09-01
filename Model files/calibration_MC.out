@@ -1,0 +1,116 @@
+:COMSYS After 2000011 simulations
+:COMSYS Best payoff is -854.8
+:COMSYS Normally terminated optimization
+:OPTIMIZER=MCMC
+:SENSITIVITY=Off
+:MULTIPLE_START=RRandom
+:RANDOM_NUMBER=Default
+:SEED=123
+:OUTPUT_LEVEL=On
+:TRACE=Off
+:MAX_ITERATIONS=1000
+:RESTART_MAX=1
+:PASS_LIMIT=2
+:FRACTIONAL_TOLERANCE=1e-05
+:TOLERANCE_MULTIPLIER=21
+:ABSOLUTE_TOLERANCE=1
+:SCALE_ABSOLUTE=1
+:VECTOR_POINTS=25
+:MCINITMETHOD=3
+:MCPAYOFFTYPE=0
+:MCRECORD=0
+:MCSCHEDULE=0
+:MCLIMIT=2000000
+:MCBURNIN=1000000
+:MCNCHAINS=2
+:MCOUTLIER=0.05
+:MCGAMMA=1
+:MCEPSILON=0.01
+:MCDELTA=0.0001
+:MCJUMP=0.05
+:MCUPDATEPAIRS=2
+:MCXOVER=0.2
+:MCTEMP=1
+:MCFTEMP=1
+:MCCOOLING=1000
+
+
+0.0001 <= base grad school leave rate  = 0.0001  <= 0.1
+10000 <= base doctoral enrollment  = 26369.9  <= 30000
+1 <= base post doc duration  = 3.35652  <= 10
+0.05 <= post doc transition to faculty fraction  = 0.701648  <= 0.8
+0.0001 <= strength of job availability on post docs to go to academia  = 0.0001  <= 3
+5 <= avg time in industry research positions  = 23.7883  <= 40
+0.01 <= base rate to receive initial awards   = 0.0653966  <= 1
+0.01 <= base rate to receive following awards  = 0.150611  <= 1
+1 <= base publication per grant per year   = 10.8155  <= 20
+0.0001 <= fraction of trials that succeed   = 0.0226368  <= 0.2
+0.0001 <= trial per grant per year  = 0.0257145  <= 2
+1 <= trials per billion USD investment  = 12.2719  <= 1000
+0.5 <= post doc position utilization  = 0.917588  <= 0.95
+0.5 <= faculty capacity utilization   = 0.95  <= 0.95
+0.5 <= industry capacity utilization   = 0.941116  <= 0.95
+1 <= initial commercial innovations  = 138.969  <= 2000
+1 <= initial industry clinical trials  = 1  <= 2000
+0.001 <= post doc position growth rate = 0.324679  <= 0.4
+0.001 <= academic position growth rate = 0.145966  <= 0.4
+0.001 <= industry position growth rate  = 0.0151783  <= 0.4
+1 <= avg trial duration industry  = 4.55857  <= 10
+1 <= NIH avg trial duration  = 6.83463  <= 10
+0.001 <= commercial innovation strength on positions  = 3  <= 3
+0.001 <= strength of commercial innovation on investment  = 1.45285  <= 3
+0.001 <= fundamental research strength on clinical research  = 0.60386  <= 3
+0.1 <= strength of perceived job prospect on enrollment  = 1.26233  <= 3
+0.001 <= strength of job availability on new grads going to industry = 0.574386  <= 3
+0.001 <= strength of faculty position availability on faculty placement from doctoral  = 0.299527  <= 3
+0.001 <= strength of job availability on duration  = 0.140748  <= 3
+0.001 <= strength of NIH funding on non PI faculty to leave research  = 0.001  <= 3
+0.001 <= strength of grant availability on PI career start   = 0.433764  <= 3
+0.001 <= strength of grant availability on career establishment  = 0.247643  <= 3
+0.001 <= strength of established faculty transition to industry  = 2.99961  <= 3
+0.001 <= faculty availability strength on fundamental research  = 1.341  <= 3
+0.001 <= trainee availability strength on fundamental research  = 0.563088  <= 3
+0.001 <= faculty availability strength on clinical research  = 0.001  <= 3
+0.001 <= trainee availability strength on clinical research  = 0.001  <= 3
+0.001 <= strength of industry researcher availability on clinical research  = 0.001  <= 3
+0.001 <= strength of workload on productivity   = 0.001  <= 3
+1000 <= NIH initial clinical trials = 5000  <= 5000
+1 <= avg grant duration  = 3.83855  <= 10
+5 <= avg time to become obsolete   = 17.0357  <= 25
+5000 <= initial grants   = 29375.6  <= 40000
+1000 <= initial non PI faculty researchers   = 50006.1  <= 100000
+10000 <= initial prior PI  = 10357.6  <= 100000
+0.01 <= base rate for funding gap after first grant  = 0.110486  <= 0.99
+0.01 <= base rate for established PI funding gap  = 0.0115318  <= 0.99
+0.0001 <= base rate to receive multiple awards at first year   = 0.0077204  <= 0.1
+0.0001 <= base rate for established PI by grant duration    = 0.0396124  <= 0.3
+0.01 <= base rate for return to PI  = 0.0355855  <= 0.9
+0.0001 <= base established PI industry transition rate  = 0.0001186  <= 0.1
+0.0001 <= base established PI exit rate  = 0.0001  <= 0.5
+0.0001 <= base non PI faculty exit rate  = 0.10782  <= 0.5
+0.0001 <= base prior PI exit rate  = 0.0160897  <= 0.5
+0.0001 <= applications per first time PI  = 4.89604  <= 10
+0.0001 <= applications per established PI  = 2.34242  <= 10
+0.0001 <= fraction of established contacts that apply  = 0.110234  <= 1
+0.0001 <= fraction of potential first time contacts that apply  = 0.0383813  <= 1
+0.01 <= scaling factor to adjust multi PI grants with both first time and established PIs  = 1.01481  <= 3
+0.0001 <= first time PI grant success rate strength  = 0.110251  <= 3
+0.0001 <= established PI grant success rate strength  = 0.322007  <= 3
+0.0001 <= base rate to receive multiple awards at first year  = 0.0077204  <= 3
+0.0001 <= strength of NIH funding on first time PI faculty to receive multiple awards  = 0.764451  <= 3
+0.0001 <= strength of grant availability on having funding gap  = 1.17198  <= 3
+0.0001 <= strength of NIH funding on non active PI faculty exit  = 0.0001  <= 3
+0.0001 <= strength of grant application workload on productivity for NIH researchers  = 0.509617  <= 3
+0.0001 <= strength of active commitments on productivity  = 0.179865  <= 3
+0.0001 <= strength of grant availability on becoming nonactive after first grant   = 0.0001  <= 3
+0.1 <= strength of trainer availability on enrollment  = 0.1  <= 3
+0.0001 <= strength of complexity on new innovations  = 3  <= 3
+0.0001 <= strength of learning  = 2.43055  <= 3
+1 <= delay for learning  = 28.7534  <= 35
+1 <= publication delay = 9.23013  <= 10
+5 <= fundamental research translation delay = 5  <= 30
+0.0001 <= academia funding strength on positions  = 0.0001  <= 3
+0.0001 <= post doc funding strength on positions  = 1.89421  <= 3
+0.0001 <= strength of NIH funding on receiving follow up awards  = 0.166861  <= 3
+20000 <= inital NIH supported fundamental studies   = 162155  <= 300000
+0.0001 <= strength of post doc position availability on post doc placement from doctoral  = 3  <= 3

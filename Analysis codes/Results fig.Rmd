@@ -1,0 +1,731 @@
+---
+title: "Result fig"
+author: "Zeynep Hasgul"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(scales) 
+library(patchwork)
+library(forcats)
+
+raw_data <-  read_excel("C:/Users/path/Data for result figure.xlsx", sheet = "Results")
+
+
+names(raw_data)[1] <- "variable"
+
+
+df <- raw_data
+
+
+```
+
+
+
+
+
+
+```{r}
+
+# ───────────────────────────────
+# 1  Long format + parsing
+# ───────────────────────────────
+
+df_long <- df %>% 
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>% 
+  mutate(
+    year     = as.numeric(year),
+    entity   = str_extract(variable, "^[^ ]+"),
+    Scenario = case_when(
+      str_detect(variable, regex("ramp up in 4yr", ignore_case = TRUE)) ~ "4-year restore",
+      str_detect(variable, regex("ramp up in 1yr", ignore_case = TRUE)) ~ "1-year restore",
+      str_detect(variable, regex("\\blow\\b",      ignore_case = TRUE)) ~ "No-increase",          # NEW
+      str_detect(variable, regex("\\bcut\\b",      ignore_case = TRUE)) ~ "Cut",
+      str_detect(variable, regex("\\bbase\\b",     ignore_case = TRUE)) ~ "Baseline",
+      TRUE ~ NA_character_
+    )
+  ) %>% 
+  filter(!is.na(Scenario))
+
+# historic vs future split
+split_future <- function(.d) .d %>% mutate(value = if_else(year > 2026, value, NA_real_))
+split_hist   <- function(.d) .d %>% mutate(Scenario = "Historic",
+                                           value    = if_else(year <= 2026, value, NA_real_))
+
+df_long <- bind_rows(
+  df_long %>% filter(Scenario == "Baseline")         %>% split_hist(),
+  df_long %>% filter(Scenario == "Baseline")         %>% split_future(),
+  df_long %>% filter(Scenario == "1-year restore") %>% split_future(),
+  df_long %>% filter(Scenario == "4-year restore") %>% split_future(),
+  df_long %>% filter(Scenario == "No-increase")            %>% split_future(),   # NEW
+  df_long %>% filter(Scenario == "Cut")  %>% split_future()
+) %>% 
+  mutate(order = if_else(Scenario == "Cut", 2L, 1L)) %>% 
+  arrange(order)
+
+
+```
+
+
+
+```{r}
+
+
+# ───────────────────────────────
+# 2  Panel-specific axis limits, labels & titles
+# ───────────────────────────────
+custom_axes <- tribble(
+  ~entity,   ~y_min, ~y_max, ~y_breaks, ~y_label,              ~plot_title,
+  "PI",         0,  45000, NA,       "People",             "A) Principal Investigators with active NIH grants",
+  "Postdoc",    0,  100000, NA,       "People",             "B) Postdoctoral researchers",
+  "Student",   0, 380000, NA,       "People",             "C) Doctoral students",
+  "Papers",     0, 120000, NA,       "Papers/year",      "D) NIH-supported fundamental research papers",
+  "Drugs",          0,     60, NA,       "Approvals/year",   "E) Annual novel drugs approved"
+)
+
+
+
+# colour / linetype / alpha keys
+scenario_cols  <- c("Baseline"         = "#7F7F7F",
+                    "1-year restore" = "#00B972",
+                    "4-year restore" = "#4DA6FF",
+                    "No-increase"            = "#9A6AFF",  
+                    "Cut"  = "#FF8543",
+                    "Historic"       = "#7F7F7F")
+
+scenario_types <- c("Baseline"         = "dotted",
+                    "1-year restore" = "solid",
+                    "4-year restore" = "solid",
+                    "No-increase"            = "solid",    
+                    "Cut"  = "solid",
+                    "Historic"       = "solid")
+
+scenario_alpha <- c("Baseline"         = 1,
+                    "1-year restore" = 0.6,
+                    "4-year restore" = 0.6,
+                    "No-increase"            = 0.6,      
+                    "Cut"  = 0.8,
+                    "Historic"       = 1)
+# ───────────────────────────────
+# 3  Helper that returns one time-series panel
+# ───────────────────────────────
+make_entity_plot <- function(entity_name, show_legend = FALSE) {
+  dat <- df_long %>% filter(entity == entity_name)
+  ax  <- custom_axes %>% filter(entity == entity_name)
+
+  ggplot() +
+    geom_line(
+      data = dat %>% filter(Scenario == "Historic"),
+      aes(year, value, group = Scenario),
+      colour = scenario_cols["Historic"],
+      linetype = scenario_types["Historic"],
+      size = 1.2, alpha = scenario_alpha["Historic"],
+      show.legend = FALSE
+    ) +
+    geom_line(
+      data = dat %>% filter(Scenario %in% c("Baseline","1-year restore","4-year restore","No-increase")), 
+      aes(year, value, colour = Scenario, linetype = Scenario, alpha = Scenario),
+      size = 1, na.rm = TRUE
+    ) +
+    geom_line(
+      data = dat %>% filter(Scenario == "Cut"),
+      aes(year, value, colour = Scenario, linetype = Scenario, alpha = Scenario),
+      size = 1, na.rm = TRUE
+    ) +
+    geom_vline(xintercept = 2026, colour = "grey70", linetype = "solid", size = 0.3) +
+    scale_color_manual(values = scenario_cols,
+                       guide = guide_legend(override.aes = list(alpha = 1))) +
+    scale_linetype_manual(values = scenario_types) +
+    scale_alpha_manual(values = scenario_alpha) +
+    scale_y_continuous(
+      limits = c(ax$y_min, ax$y_max),
+      breaks = if (is.na(ax$y_breaks)) waiver() else ax$y_breaks,
+      labels = scales::label_comma()
+    ) +
+    scale_x_continuous(limits = c(1995, 2050), breaks = seq(1995, 2050, 5)) +
+
+  
+  labs(title = ax$plot_title, x = NULL, y = ax$y_label) +
+ theme_classic() +
+ theme(plot.title = element_text(hjust = 0, face = "bold"),
+      legend.position = if (show_legend) "bottom" else "none")
+
+}
+
+
+# ───────────────────────────────
+# 4  Build panels A–E
+# ───────────────────────────────
+entities <- custom_axes$entity
+plots    <- map(entities, make_entity_plot)
+
+# carry the legend on panel A
+plots[[1]] <- make_entity_plot(entities[1], show_legend = TRUE)
+
+```
+
+```{r}
+
+# 
+# df2_long <- raw_data %>% 
+#   pivot_longer(-variable, names_to = "year", values_to = "value") %>% 
+#   mutate(
+#     year     = as.numeric(year),
+#     Scenario = case_when(
+#       str_detect(variable, regex("4yr",  TRUE)) ~ "4-year restore",
+#       str_detect(variable, regex("1yr",  TRUE)) ~ "1-year restore",
+#       str_detect(variable, regex("\\blow\\b", TRUE)) ~ "No-increase",          
+#       str_detect(variable, regex("\\bcut\\b", TRUE)) ~ "Cut",
+#       str_detect(variable, regex("\\bbase\\b",TRUE)) ~ "Baseline",
+#       TRUE ~ NA_character_
+#     )
+#   ) %>% 
+#   filter(str_detect(variable, regex("^cumulative", TRUE))) %>% 
+#   filter(!is.na(Scenario), year == 2050)
+# 
+# base_total <- df2_long %>% filter(Scenario == "Baseline") %>% pull(value)
+# 
+# shortfalls <- df2_long %>% 
+#   filter(Scenario != "Baseline") %>% 
+#   mutate(shortfall = value - base_total) %>% 
+#   mutate(
+#     Scenario = factor(
+#       Scenario,
+#       levels = c("Cut", "4-year restore", "1-year restore", "No-increase") 
+#     )
+#   )
+# 
+# # keep the lower tick from ever going above 0
+# low_tick <- min(0, floor(min(shortfalls$shortfall) / 50) * 50)
+# 
+# plot_F <- ggplot(shortfalls, aes(x = Scenario, y = shortfall, fill = Scenario)) +
+#   geom_col(width = 0.7, show.legend = FALSE) +
+#   scale_y_continuous(
+#     limits = c(low_tick, 0),
+#     breaks = seq(low_tick, 0, by = 50),  # <-- always valid
+#     expand = c(0, 0),
+#     labels = scales::comma
+#   ) +
+#   scale_x_discrete(position = "top") +
+#   scale_fill_manual(values = c(
+#     "1-year restore" = "#00B972",
+#     "4-year restore" = "#4DA6FF",
+#     "No-increase"    = "#9A6AFF",
+#     "Cut"  = "#FF8543"
+#   )) +
+#   geom_hline(yintercept = 0, colour = "grey25", linewidth = 0.8) +
+#   labs(title = "F) Cumulative novel drugs shortfall vs. baseline", x = NULL, y = "Lost drugs (2026-2050)") +
+#   theme_classic(base_size = 11) +
+#   theme(
+#     plot.title = element_text(face = "bold", hjust = 0),
+#     panel.grid = element_blank(), axis.ticks = element_blank(),
+#     axis.text.y = element_text(margin = margin(r = 4))
+#   )
+
+
+```
+
+
+
+```{r}
+
+
+
+# ---- Helper: map variable names to Scenario labels ----
+scenario_from_var <- function(var) {
+  case_when(
+    str_detect(var, regex("4yr",  TRUE)) ~ "4-year restore",
+    str_detect(var, regex("1yr",  TRUE)) ~ "1-year restore",
+    str_detect(var, regex("\\blow\\b", TRUE)) ~ "No-increase",
+    str_detect(var, regex("\\bcut\\b", TRUE)) ~ "Cut",
+    str_detect(var, regex("\\bbase\\b", TRUE)) ~ "Baseline",
+    TRUE ~ NA_character_
+  )
+}
+
+# =========================
+# 1) CUMULATIVE SHORTFALL (year == 2050)
+# =========================
+df_cum <- raw_data %>%
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>%
+  mutate(
+    year     = suppressWarnings(as.numeric(year)),
+    Scenario = scenario_from_var(variable)
+  ) %>%
+  filter(str_detect(variable, regex("^cumulative", TRUE)),
+         !is.na(Scenario), year == 2050)
+
+base_cum <- df_cum %>% filter(Scenario == "Baseline") %>% pull(value)
+
+shortfalls <- df_cum %>%
+  filter(Scenario != "Baseline") %>%
+  mutate(shortfall = value - base_cum) %>%
+  select(Scenario, shortfall)
+
+# =========================
+# 2) WELFARE SHORTFALL (year == 2050)  <-- NOTE: adjust "^welfare" if needed
+# =========================
+df_welfare <- raw_data %>%
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>%
+  mutate(
+    year     = suppressWarnings(as.numeric(year)),
+    Scenario = scenario_from_var(variable)
+  ) %>%
+  filter(str_detect(variable, regex("^welfare", TRUE)),
+         !is.na(Scenario), year == 2050)
+
+base_welfare <- df_welfare %>% filter(Scenario == "Baseline") %>% pull(value)
+
+welfare_shortfalls <- df_welfare %>%
+  filter(Scenario != "Baseline") %>%
+  mutate(welfare_shortfall = value - base_welfare) %>%
+  select(Scenario, welfare_shortfall)
+
+# =========================
+# 3) JOIN + CLEAN + ORDER
+# =========================
+x_order <- c("Cut", "4-year restore", "1-year restore", "No-increase")
+
+plot_df <- shortfalls %>%
+  inner_join(welfare_shortfalls, by = "Scenario") %>%
+  mutate(
+    # normalize any weird spacing or em/en dashes
+    Scenario = str_squish(Scenario),
+    Scenario = str_replace_all(Scenario, "[\u2013\u2014]", "-"),
+    # force desired left-to-right order
+    Scenario = fct_relevel(Scenario, x_order)
+  )
+
+# Safety: drop rows with NA shortfalls if any
+plot_df <- plot_df %>% filter(is.finite(shortfall), is.finite(welfare_shortfall))
+
+# =========================
+# 4) AXIS + LABEL SETTINGS
+# =========================
+# Bars are shortfalls (likely negative), keep the top at 0
+y_min <- floor(min(plot_df$shortfall) / 50) * 50
+y_max <- 0
+
+
+
+# =========================
+# 5) PLOT
+# =========================
+
+# Desired scenario order left→right
+x_order <- c("No-increase", "Cut", "1-year restore", "4-year restore")
+
+plot_df <- plot_df %>%
+  dplyr::mutate(
+    Scenario = stringr::str_squish(Scenario),
+    Scenario = stringr::str_replace_all(Scenario, "[\u2013\u2014]", "-"),
+    Scenario = forcats::fct_relevel(Scenario, x_order)
+  )
+
+# Helper: welfare labels in trillions, bold, no minus sign
+fmt_trillions <- function(x) paste0("$", round(abs(x) / 1e12, 2), "T")
+
+# Dynamic offset so labels don’t overlap bars
+offset <- max(10, 0.05 * (y_max - (y_min - 50)))
+
+plot_F <- ggplot(plot_df, aes(x = Scenario)) +
+  geom_col(aes(y = shortfall, fill = Scenario), width = 0.7, show.legend = FALSE) +
+  # Welfare shortfall as bold text under each bar
+  geom_text(
+    aes(y = shortfall - offset, label = fmt_trillions(welfare_shortfall)),
+    vjust = 1.05, size = 3.5, colour = "black", fontface = "bold"
+  ) +
+  scale_y_continuous(
+    limits = c(y_min - 50, y_max),   # extend for labels
+    breaks = seq(y_min, y_max, by = 50),
+    expand = c(0, 0),
+    labels = comma
+  ) +
+  scale_x_discrete(limits = x_order, position = "top") +  # force order
+  scale_fill_manual(values = c(
+    "1-year restore" = "#00B972",
+    "4-year restore" = "#4DA6FF",
+    "No-increase"    = "#9A6AFF",
+    "Cut"            = "#FF8543"
+  )) +
+  geom_hline(yintercept = 0, colour = "grey25", linewidth = 0.8) +
+  labs(
+    title = "F) Cumulative novel drugs shortfall vs. baseline",
+    x = NULL,
+    y = "Lost drugs (2026–2050)"
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0),
+    panel.grid = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_text(margin = margin(r = 4))
+  )
+
+print(plot_F)
+
+```
+
+
+
+```{r }
+
+# ───────────────────────────────
+# 6  Assemble A–F
+# ───────────────────────────────
+
+# ──────────────────────────────────────────────────────────
+# helper to nuke all guides in a ggplot object
+# ──────────────────────────────────────────────────────────
+suppress_guides <- function(p) {
+  p + guides(colour  = "none",
+             linetype = "none",
+             alpha    = "none",
+             fill     = "none")
+}
+
+# ──────────────────────────────────────────────────────────
+# 1) build the 5 line-chart panels
+#    • panel A     keeps its colour guide
+#    • panels B-E  have *no* guides after suppress_guides()
+# ──────────────────────────────────────────────────────────
+plots <- vector("list", length(entities))
+
+plots[[1]] <- make_entity_plot(entities[1], show_legend = TRUE) +
+              guides(linetype = "none", alpha = "none")      # keep colour only
+
+for (i in 2:length(entities)) {
+  plots[[i]] <- suppress_guides(
+                  make_entity_plot(entities[i], show_legend = FALSE)
+                )
+}
+
+# ──────────────────────────────────────────────────────────
+# 2) panel F already has guide = "none" inside scale_fill_manual()
+# ──────────────────────────────────────────────────────────
+plots <- c(plots, list(plot_F))
+
+# ──────────────────────────────────────────────────────────
+# 3) patchwork – two columns, ONE shared legend
+# ──────────────────────────────────────────────────────────
+library(patchwork)
+
+final_plot <- wrap_plots(plots, ncol = 2) +
+              plot_layout(guides = "collect") &
+              theme(legend.position = "bottom")
+
+
+
+
+```
+
+```{r fig.width=11, fig.height=8}
+
+
+print(final_plot)
+
+```
+
+
+```{r}
+
+ggsave(
+  filename = "results.svg",
+  plot = final_plot,
+  width = 11,     
+  height = 8,     
+  units = "in",
+  dpi = 300
+)
+
+
+```
+
+
+
+```{r}
+
+df_pct <- raw_data %>%
+  rename(variable = 1) %>%
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>%
+  mutate(
+    year   = as.numeric(year),
+    entity = str_extract(variable, "^[^ ]+"),
+    Scenario = case_when(
+      str_detect(variable, regex("4yr", TRUE))       ~ "4-year restore",
+      str_detect(variable, regex("1yr", TRUE))       ~ "1-year restore",
+      str_detect(variable, regex("\\blow\\b", TRUE)) ~ "No-increase",
+      str_detect(variable, regex("\\bcut\\b", TRUE)) ~ "Cut",
+      str_detect(variable, regex("\\bbase\\b", TRUE))~ "Baseline",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(Scenario)) %>%
+  group_by(entity, year) %>%
+  mutate(
+    baseline_value = value[Scenario == "Baseline"][1]
+  ) %>%
+  ungroup() %>%
+  mutate(
+    scenario_value = value,
+    diff     = scenario_value - baseline_value,
+    pct_diff = if_else(!is.na(baseline_value) & baseline_value != 0,
+                       diff / baseline_value * 100,
+                       NA_real_)
+  ) %>%
+  # keep only non-baseline scenario rows; remove next two lines if you want baseline rows too
+  filter(Scenario != "Baseline") %>%
+  select(entity, year, Scenario,
+         scenario_value, baseline_value, diff, pct_diff) %>%
+  arrange(entity, year, factor(Scenario,
+                               levels = c("Cut","4-year restore",
+                                          "1-year restore","No-increase")))
+
+# df_pct <- df_pct %>%
+#   filter(year > 2025)
+
+df_pct
+
+
+pct_change_2050 <- raw_data %>%
+  rename(variable = 1) %>%
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>%
+  mutate(
+    year   = as.numeric(year),
+    entity = str_extract(variable, "^[^ ]+"),
+    Scenario = case_when(
+      str_detect(variable, regex("4yr", TRUE))      ~ "4-year restore",
+      str_detect(variable, regex("1yr", TRUE))      ~ "1-year restore",
+      str_detect(variable, regex("\\blow\\b", TRUE)) ~ "No-increase",   # NEW
+      str_detect(variable, regex("\\bcut\\b", TRUE)) ~ "Cut",
+      str_detect(variable, regex("\\bbase\\b",TRUE)) ~ "Baseline",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(year == 2050, !is.na(Scenario)) %>%
+  group_by(entity) %>%
+  mutate(
+    base_2050  = value[Scenario == "Baseline"][1],
+    pct_change = (value - base_2050) / base_2050 * 100
+  ) %>%
+  ungroup() %>%
+  filter(Scenario != "Baseline") %>%
+  select(entity, Scenario, pct_change) %>%
+  arrange(entity, factor(Scenario,
+                         levels = c("Cut","4-year restore",
+                                    "1-year restore","No-increase")))
+
+pct_change_2050
+
+cumulative_gap <- raw_data %>%
+  rename(variable = 1) %>%
+  pivot_longer(-variable, names_to = "year", values_to = "value") %>%
+  mutate(
+    year   = as.numeric(year),
+    entity = str_extract(variable, "^[^ ]+"),
+    Scenario = case_when(
+      str_detect(variable, regex("\\bbase\\b",    TRUE)) ~ "Baseline",
+      str_detect(variable, regex("\\bextreme\\b", TRUE)) ~ "Extreme",
+      str_detect(variable, regex("4yr",           TRUE)) ~ "4-year restore",
+      str_detect(variable, regex("1yr",           TRUE)) ~ "1-year restore",
+      str_detect(variable, regex("\\blow\\b",     TRUE)) ~ "No-increase",
+      str_detect(variable, regex("\\bcut\\b",     TRUE)) ~ "Cut",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(Scenario), entity == "Cumulative", year %in% c(2026, 2050)) %>%
+  pivot_wider(names_from = year, values_from = value, names_prefix = "y") %>%
+  mutate(
+    gap_cumulative = y2050 - y2026  # number of drugs added between 2025–2050
+  )
+
+# Baseline 2050 value (for change-from-baseline at 2050)
+base_2050_val <- cumulative_gap %>%
+  filter(Scenario == "Baseline") %>%
+  pull(y2050) %>%
+  { if (length(.) == 0) NA_real_ else .[1] }
+
+# Final table: absolute # drugs and change from baseline at 2050
+cumulative_gap <- cumulative_gap %>%
+  mutate(
+    baseline_2050                 = base_2050_val,
+    abs_change_from_baseline_2050 = y2050 - baseline_2050,
+    pct_change_from_baseline_2050 = if_else(
+      is.na(baseline_2050) | baseline_2050 == 0, NA_real_,
+      (y2050 - baseline_2050) / baseline_2050 * 100
+    )
+  ) %>%
+  select(
+    Scenario,
+    y2026, y2050,
+    gap_cumulative,                  # ← number of drugs (2050 − 2025)
+    baseline_2050,
+    abs_change_from_baseline_2050,   # ← Δ vs Baseline at 2050 (absolute)
+    pct_change_from_baseline_2050    # ← Δ vs Baseline at 2050 (%)
+  ) %>%
+  arrange(
+    factor(
+      Scenario,
+      levels = c("Baseline","Extreme","4-year restore","1-year restore","No-increase","Cut")
+    ),
+    Scenario
+  )
+
+cumulative_gap
+
+
+
+
+
+```
+
+
+```{r fig.width=10, fig.height=8}
+
+# ── 3) Axis settings for each panel ──────────────────────────────────────────
+pct_axes <- tribble(
+  ~entity,     ~y_min, ~y_max, ~y_breaks,                ~y_label,              ~plot_title,
+  "PI",           -75,     10,   seq(-75, 10, 20),        "% change from base", "Principal Investigators",
+  "Postdoc",      -75,     10,   seq(-75, 10, 20),        "% change from base", "Postdoctoral researchers",
+  "Student",      -75,     10,   seq(-75, 10, 20),        "% change from base", "Doctoral students",
+  "Papers",       -75,     10,   seq(-75, 10, 20),        "% change from base", "NIH-supported papers",
+  "Drugs",        -75,     10,   seq(-75, 10, 20),        "% change from base", "Novel drug approvals",
+  "Cumulative",   -75,     10,   seq(-75, 10, 20),        "% change from base", "Cumulative drugs (2026–2050)"
+)
+
+
+# ── 4) Plot builder function ─────────────────────────────────────────────────
+make_pct_plot <- function(entity_name, show_legend = FALSE) {
+  dat <- df_pct %>% filter(entity == entity_name)
+  if (nrow(dat) == 0) return(NULL)
+
+  ax <- pct_axes %>% filter(entity == entity_name)
+  if (nrow(ax) == 0) {
+    # fallback axis if entity not listed
+    ax <- tibble(
+      y_min      = floor(min(dat$pct_diff, na.rm = TRUE) / 10) * -10,
+      y_max      = 0,
+      y_breaks   = list(NA),
+      y_label    = "% change from base",
+      plot_title = entity_name
+    )
+  }
+
+  y_min <- ax$y_min[[1]]
+  y_max <- ax$y_max[[1]]
+  y_brks <- ax$y_breaks[[1]]
+  y_lab  <- ax$y_label[[1]]
+  title  <- ax$plot_title[[1]]
+
+supp_pct_plot <- ggplot(dat, aes(year, pct_diff,
+                  colour   = Scenario,
+                  linetype = Scenario,
+                  alpha    = Scenario,
+                  group    = Scenario)) +
+    geom_line(size = 1, na.rm = TRUE) +
+    geom_hline(yintercept = 0, colour = "grey25", linewidth = 0.8, linetype = "dashed") +
+    scale_color_manual(values = scenario_cols,
+                       guide  = guide_legend(override.aes = list(alpha = 1))) +
+    scale_linetype_manual(values = scenario_types) +
+    scale_alpha_manual(values = scenario_alpha) +
+    scale_y_continuous(
+      limits = c(y_min, y_max),
+      breaks = if (all(is.na(y_brks))) waiver() else y_brks,
+      labels = function(x) paste0(x, "%")
+    ) +
+    scale_x_continuous(limits = c(2025, 2050), breaks = seq(2025, 2050, 5)) +
+    labs(title = title, x = "Year", y = y_lab) +
+    theme_classic() +
+    theme(
+      plot.title      = element_text(hjust = 0.5, face = "bold"),
+      legend.position = if (show_legend) "bottom" else "none"
+    )
+}
+
+
+
+
+
+
+
+
+# ── 5) Build multi-panel figure ──────────────────────────────────────────────
+entities      <- pct_axes$entity
+pct_plots_raw <- map(entities, make_pct_plot, show_legend = FALSE)
+pct_plots     <- compact(pct_plots_raw)
+
+# put the legend on the first panel
+if (length(pct_plots) > 0) {
+  pct_plots[[1]] <- pct_plots[[1]] + guides(linetype = "none", alpha = "none")
+}
+
+
+
+
+
+
+supp_pct_plot <- wrap_plots(pct_plots, ncol = 2) +
+                plot_layout(guides = "collect") &
+                theme(legend.position = "bottom")
+
+
+
+
+print(supp_pct_plot)
+
+
+
+```
+
+```{r}
+
+
+df_pct_summary   <- df_pct %>%
+  filter(year > 2026) %>%
+  group_by(entity, Scenario) %>%
+  summarise(
+    pct_min     = min(pct_diff, na.rm = TRUE),
+    year_min    = year[which.min(pct_diff)],
+    pct_max     = max(pct_diff, na.rm = TRUE),
+    year_max    = year[which.max(pct_diff)],
+    pct_2050    = pct_diff[year == 2050][1],
+    .groups = "drop"
+  )
+
+df_pct_summary
+
+
+
+
+
+
+
+```
+
+```{r}
+
+
+ggsave(
+  filename = "make_pct_plot.svg",
+  plot = supp_pct_plot,
+  width = 10,     
+  height = 8,     
+  units = "in",
+  dpi = 300
+)
+
+library(openxlsx)
+
+# Save df_pct to Excel
+write.xlsx(df_pct, file = "df_pct.xlsx", rowNames = FALSE)
+write.xlsx(df_pct_summary, file = "df_pct_summary.xlsx", rowNames = FALSE)
+
+
+```

@@ -1,0 +1,707 @@
+---
+title: "Budget fig"
+author: "Zeynep Hasgul"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(scales) 
+library(patchwork)
+library(ggtext) 
+library(purrr)
+library(tibble)
+
+# ---------------------------
+# 1) Read & prepare
+# ---------------------------
+
+path <- "C:/Users/path/Data for fit figure.xlsx" 
+
+
+raw <- read_excel(path, sheet = 1)
+
+
+```
+
+
+
+```{r}
+
+raw <- raw %>%
+  rename(
+    Variables  = matches("^Variables$", ignore.case = TRUE),
+    Group      = matches("^Group$", ignore.case = TRUE),
+    Calibration= matches("^Calibration$", ignore.case = TRUE)
+  )
+
+# Identify the time columns (e.g., 1995, 1995.12, 1996, …)
+time_cols <- grep("^\\d{4}(?:\\.\\d+)?$", names(raw), value = TRUE)
+
+# ---------------------------
+# 2) Long format + type flags
+# ---------------------------
+long_df <- raw %>%
+  mutate(
+    type = if_else(str_detect(Variables, "^DATA\\b"), "data", "simulation"),
+    Group = as.integer(Group),
+    Calibration = str_to_lower(trimws(Calibration))
+  ) %>%
+  select(variable = Variables, group = Group, calibration = Calibration, type, all_of(time_cols)) %>%
+  pivot_longer(
+    cols = all_of(time_cols),
+    names_to = "time",
+    values_to = "value",
+    values_drop_na = TRUE
+  ) %>%
+  mutate(
+    time = as.numeric(time)
+  ) %>%
+  arrange(group, variable, time)
+
+# ---------------------------
+# 3) Split by calibration
+# ---------------------------
+df_full    <- filter(long_df, calibration == "full")
+df_partial <- filter(long_df, calibration == "partial")
+
+
+```
+
+
+
+```{r}
+
+raw %>% 
+  filter(Group == 1) %>% 
+  select(Variables, Calibration, Group, all_of(time_cols))
+
+
+
+```
+
+
+```{r fig.width=15, fig.height=15}
+
+
+# --------------------------
+# 0) All groups in df_full
+# --------------------------
+groups_full <- df_full %>% pull(group) %>% unique() %>% sort()
+
+cat("Total groups in FULL calibration:", length(groups_full), "\n")
+
+# --------------------------
+# 1) One data + one sim per group (or NA if missing)
+# --------------------------
+pair_table <- map_dfr(groups_full, function(g) {
+  gdat <- filter(df_full, group == g)
+
+  data_vars <- gdat %>% filter(type == "data")       %>% distinct(variable) %>% pull()
+  sim_vars  <- gdat %>% filter(type == "simulation") %>% distinct(variable) %>% pull()
+
+  tibble(
+    group   = g,
+    data_var = if (length(data_vars)) data_vars[1] else NA_character_,
+    sim_var  = if (length(sim_vars))  sim_vars[1]  else NA_character_,
+    n_data_series = length(data_vars),
+    n_sim_series  = length(sim_vars)
+  )
+})
+
+cat("\nPairs chosen per group (if a side is missing it will be NA):\n")
+print(pair_table, n = 200)
+
+# --------------------------
+# 2) Time coverage per group/type (sanity)
+# --------------------------
+coverage <- df_full %>%
+  mutate(year = floor(time)) %>%
+  group_by(group, type) %>%
+  summarise(
+    n_points   = n(),
+    n_years    = n_distinct(year),
+    first_time = min(time),
+    last_time  = max(time),
+    .groups = "drop"
+  ) %>% arrange(group, type)
+
+cat("\nTime coverage:\n")
+print(coverage, n = 200)
+
+
+```
+
+
+```{r fig.width=10, fig.height=8}
+
+# --------------------------
+# 3) Year-aligned R^2 helper
+# --------------------------
+r2_year_aligned <- function(raw_sub, sim_sub) {
+  data_yearly <- raw_sub %>%
+    mutate(year = as.integer(round(time))) %>%
+    group_by(year) %>%
+    summarise(value_data = mean(value, na.rm = TRUE), .groups = "drop")
+
+  sim_yearly <- sim_sub %>%
+    mutate(year = as.integer(floor(time + 1e-9))) %>%  # 1995.12 -> 1995
+    group_by(year) %>%
+    summarise(value_model = mean(value, na.rm = TRUE), .groups = "drop")
+
+  merged <- inner_join(data_yearly, sim_yearly, by = "year")
+  n_overlap <- nrow(merged)
+  if (n_overlap < 2) return(list(r2 = NA_real_, overlap_years = n_overlap))
+  if (sd(merged$value_data) == 0 || sd(merged$value_model) == 0)
+    return(list(r2 = NA_real_, overlap_years = n_overlap))
+
+  list(
+    r2 = cor(merged$value_data, merged$value_model, use = "complete.obs")^2,
+    overlap_years = n_overlap
+  )
+}
+
+# --------------------------
+# 4) Diagnostics per group
+# --------------------------
+diag_table <- pair_table %>%
+  rowwise() %>%
+  mutate(
+    raw_sub = list(if (!is.na(data_var))
+      df_full %>% filter(group == group, type == "data",       variable == data_var)
+      else tibble(time = numeric(), value = numeric())),
+    sim_sub = list(if (!is.na(sim_var))
+      df_full %>% filter(group == group, type == "simulation", variable == sim_var)
+      else tibble(time = numeric(), value = numeric())),
+    n_points_data = nrow(raw_sub),
+    n_points_sim  = nrow(sim_sub),
+    years_data = if (n_points_data) n_distinct(floor(raw_sub$time)) else 0L,
+    years_sim  = if (n_points_sim)  n_distinct(floor(sim_sub$time)) else 0L,
+    tmp = list(if (n_points_data && n_points_sim) r2_year_aligned(raw_sub, sim_sub) else list(r2 = NA_real_, overlap_years = 0L)),
+    r2 = tmp$r2,
+    overlap_years = tmp$overlap_years
+  ) %>%
+  select(-tmp) %>%
+  ungroup() %>%
+  arrange(group)
+
+
+```
+
+
+
+```{r fig.width=16, fig.height=21}
+
+
+
+labels_tbl <- tibble::tibble(
+  group = seq_along(c(
+    "Applications by established PI",
+    "Applications by first-time PI",
+    "Becoming nonactive after first grant",
+    "Cumulative approvals",
+    "Doctoral enrollment",
+    "Doctoral recipients",
+    "Doctoral recipients securing academic positions",
+    "Doctoral recipients securing industry positions",
+    "Doctoral recipients without definite plans after graduation and other sector jobs",
+    "Established active PIs",
+    "Established PI by grant duration",
+    "Established PI having funding gap",
+    "Established project grant investigators applied per year",
+    "First-time active PI",
+    "First-time project grant investigators applied per year",
+    "Getting new grant after the first",
+    "Grant success rate",
+    "Industry active clinical trials registered",
+    "New clinical trials by industry",
+    "New clinical trials by NIH",
+    "New grant approvals",
+    "New molecular entities and new biologics",
+    "NIH active clinical trials registered",
+    "NIH funded fundamental papers",
+    "Nonactive prior PI cumulative",
+    "Obtaining initial grant",
+    "Obtaining more than single grant in the first round",
+    "Pharma industry R&D expenditure",
+    "Postdoctoral appointment",
+    "Publication per grant per year",
+    "Return to PI",
+    "RPG applications",
+    "Sum of non PI and non active PI",
+    "Total awards",
+    "Total doctoral students",
+    "Total doctorate holders in R&D at academia",
+    "Total doctorate holders in R&D at industry",
+    "Total post docs",
+    "competing RPG budget in 2025 USD ",
+    "noncompeting RPG budget in 2025 USD" 
+
+  )),
+  title = c(
+    "1) Grant applications (Established)",
+    "2) Grant applications (First-contact)",
+    "3) Non active after first grant",
+    "4) Cumulative novel drug approvals",
+    "5) Doctoral enrollment",
+    "6) Total doctoral recipients",
+    "7) Doctoral recipients securing\nacademic positions",
+    "8) Doctoral recipients securing\nindustry positions",
+    "9) Doctoral recipients without plans\nin academia or industry",
+    "10) Established active PIs",
+    "11) Becoming established PI by grant duration",
+    "12) Established PI having funding gap",
+    "13) Established grant applicants",
+    "14) First-time active PI",
+    "15) First-contact grant applicants",
+    "16) First-time PI getting another grant",
+    "17) Grant application success rate",
+    "18) Active clinical trials (industry)",
+    "19) New clinical trials (industry)",
+    "20) New clinical trials (NIH)",
+    " New grant approvals",
+    "21) New novel drug approvals",
+    "22) Active clinical trials (NIH)",
+    "23) NIH-funded fundamental papers",
+    "24) Nonactive prior PI (cumulative)",
+    "25) Obtaining initial grant",
+    "26) Obtaining more than single grant in the first round",
+    "27) Pharma industry R&D expenditure",
+    "28) Postdoctoral appointment",
+    "29) Publication per grant per year",
+    "30) Return to PI from non-active",
+    "31) Total grant applications",
+    "32) Sum of non PI and non active PI",
+    " Active NIH grants",
+    "33) Doctoral students",
+    "34) Total doctorate holders in academia",
+    "35) Total doctorate holders in industry",
+    "36) Total postdocs",
+    "37) ",
+    "38) "
+  ),
+  ylab = c(
+    "Grants/year", "Grants/year", "People/year", "Approvals", "People/year", "People/year", "People/year", "People/year", "People/year",
+    "People", "People/year", "People/year", "People/year", "People", "People/year", "People/year", "%",
+    "Trials", "Trials/year", "Trials/year", "Grants/year", "Approvals/year", "Trials", "Papers/year", "People",
+    "People/year", "People/year", "USD/year (Billions)", "People/Year", "Papers/year", "People/year", "Grants/year", "People",
+    "Grants", "People", "People", "People", "People", "USD/Year", "USD/Year"
+  )
+)
+
+# =========================================================
+# 2) Helpers
+# =========================================================
+
+
+# ---------------- Helpers ----------------
+format_kmb <- function(x) {
+  ifelse(abs(x) >= 1e9, paste0(round(x / 1e9, 1), "B"),
+  ifelse(abs(x) >= 1e6, paste0(round(x / 1e6, 1), "M"),
+  ifelse(abs(x) >= 1e3, paste0(round(x / 1e3, 1), "K"),
+         as.character(round(x, 1)))))
+}
+
+wrap_preserve <- function(x, width = 36) {
+  parts <- strsplit(x, "\n", fixed = TRUE)[[1]]
+  paste(vapply(parts, stringr::str_wrap, character(1), width = width), collapse = "\n")
+}
+get_title <- function(g) {
+  i <- match(g, labels_tbl$group)
+  if (is.na(i)) paste0("Group ", g) else labels_tbl$title[i]
+}
+get_ylab <- function(g) {
+  i <- match(g, labels_tbl$group)
+  if (is.na(i)) "Value" else labels_tbl$ylab[i]
+}
+
+# ---- Metrics on INTEGER-YEAR points only ----
+# MAPE (percent). Drops rows where data == 0 to avoid divide-by-zero.
+mape_integer_years <- function(raw_sub, sim_sub, tol = 1e-8) {
+  raw_int <- raw_sub %>% dplyr::filter(abs(Time - round(Time)) < tol) %>%
+    dplyr::mutate(Time = as.integer(round(Time)))
+  sim_int <- sim_sub %>% dplyr::filter(abs(Time - round(Time)) < tol) %>%
+    dplyr::mutate(Time = as.integer(round(Time)))
+
+  merged <- dplyr::inner_join(
+    dplyr::transmute(raw_int, Time, value_data = value),
+    dplyr::transmute(sim_int, Time, value_model = value),
+    by = "Time"
+  )
+  merged <- dplyr::filter(merged, value_data != 0)
+  if (nrow(merged) < 1) return(NA_real_)
+  mean(abs((merged$value_model - merged$value_data) / merged$value_data)) * 100
+}
+
+# (Optional) R² — keep in the table if you want, or drop the column.
+r2_integer_years <- function(raw_sub, sim_sub, tol = 1e-8) {
+  raw_int <- raw_sub %>% dplyr::filter(abs(Time - round(Time)) < tol) %>%
+    dplyr::mutate(Time = as.integer(round(Time)))
+  sim_int <- sim_sub %>% dplyr::filter(abs(Time - round(Time)) < tol) %>%
+    dplyr::mutate(Time = as.integer(round(Time)))
+
+  merged <- dplyr::inner_join(
+    dplyr::transmute(raw_int, Time, value_data = value),
+    dplyr::transmute(sim_int, Time, value_model = value),
+    by = "Time"
+  )
+  if (nrow(merged) < 2) return(NA_real_)
+  if (stats::sd(merged$value_data) == 0 || stats::sd(merged$value_model) == 0) return(NA_real_)
+  stats::cor(merged$value_data, merged$value_model, use = "complete.obs")^2
+}
+
+# ---------------- Ordering + palette ----------------
+groups_full <- labels_tbl$group[labels_tbl$group %in% unique(df_full$group)]
+palette_global <- c("Data" = "blue4", "Simulation" = "blue")
+
+# =========================================================
+# A) Build FULL calibration grid (NO metrics in titles/caption)
+# =========================================================
+plots_full <- list()
+
+for (g in groups_full) {
+  gdat    <- dplyr::filter(df_full, group == g)
+  raw_sub <- dplyr::filter(gdat, type == "data")       %>% dplyr::transmute(Time = time, value)
+  sim_sub <- dplyr::filter(gdat, type == "simulation") %>% dplyr::transmute(Time = time, value)
+  if (!nrow(raw_sub) || !nrow(sim_sub)) next
+
+  ttl <- wrap_preserve(get_title(g), width = 36)
+
+  p <- ggplot2::ggplot() +
+    ggplot2::geom_line (data = sim_sub, ggplot2::aes(Time, value, color = "Simulation"), linewidth = 1) +
+    ggplot2::geom_point(data = raw_sub, ggplot2::aes(Time, value, color = "Data"), size = 2) +
+    ggplot2::scale_y_continuous(labels = format_kmb) +
+    ggplot2::scale_x_continuous(limits = c(1995, 2024)) +
+    ggplot2::scale_color_manual(NULL, values = palette_global) +
+    ggplot2::guides(color = ggplot2::guide_legend(
+      override.aes = list(linetype = c(0, 1), shape = c(16, NA)),
+      title.theme  = ggplot2::element_text(size = 14),
+      label.theme  = ggplot2::element_text(size = 14)
+    )) +
+    ggplot2::theme_classic(base_size = 12) +
+    ggplot2::theme(
+      legend.position = "bottom",
+      axis.text  = ggplot2::element_text(size = 12),
+      axis.title = ggplot2::element_text(size = 12),
+      plot.title = ggplot2::element_text(size = 11, lineheight = 1.1, hjust = 0.5,
+                                         margin = ggplot2::margin(b = 3))
+    ) +
+    ggplot2::labs(title = ttl, x = "Year", y = get_ylab(g))
+
+  plots_full[[length(plots_full) + 1]] <- p
+}
+
+full_grid <- patchwork::wrap_plots(plots_full, ncol = 4, guides = "collect") &
+  ggplot2::theme(
+    legend.position = "bottom",
+    legend.text  = ggplot2::element_text(size = 14),
+    legend.title = ggplot2::element_text(size = 14)
+  )
+
+# Global title only; no caption with metrics
+full_grid <- full_grid + patchwork::plot_annotation(
+  title = "Full calibration fit to historical data"
+)
+
+print(full_grid)
+
+# =========================================================
+# B) Create a METRICS TABLE (aligned to labels_tbl order)
+#     - Shows group, title, ylab, MAPE (%), and R² (optional)
+#     - NO metrics on the figure; this table is printed instead
+# =========================================================
+metrics_tbl <- purrr::map_dfr(groups_full, function(g) {
+  gdat    <- dplyr::filter(df_full, group == g)
+  raw_sub <- dplyr::filter(gdat, type == "data")       %>% dplyr::transmute(Time = time, value)
+  sim_sub <- dplyr::filter(gdat, type == "simulation") %>% dplyr::transmute(Time = time, value)
+
+  mape_val <- if (nrow(raw_sub) && nrow(sim_sub)) mape_integer_years(raw_sub, sim_sub) else NA_real_
+  r2_val   <- if (nrow(raw_sub) && nrow(sim_sub)) r2_integer_years(raw_sub, sim_sub)   else NA_real_
+
+  tibble::tibble(
+    group = g,
+    title = get_title(g),
+    ylab  = get_ylab(g),
+    MAPE_percent = mape_val,
+    R2 = r2_val
+  )
+})
+
+# (Optional) round for display
+metrics_tbl_display <- metrics_tbl %>%
+  dplyr::mutate(
+    MAPE_percent = round(MAPE_percent, 2),
+    R2 = round(R2, 3)
+  )
+
+print(metrics_tbl_display, n = nrow(metrics_tbl_display))
+# If you prefer CSV output: readr::write_csv(metrics_tbl_display, "metrics_full_calibration.csv")
+
+
+
+
+```
+
+```{r fig.width=8, fig.height=6}
+
+
+# ==== CUSTOMIZE THESE ====
+global_title <- "Partial calibration compared to historical data"
+
+
+
+labels_tbl <- tibble::tibble(
+  group = c(21, 34, 39, 40),
+  title = c("1) New grant approvals",
+            "2) Active NIH grants",
+            "3) Competing grant budget",
+            "4) Noncompeting grant budget"),
+  ylab  = c("Grants/year", "Grants", "USD/year", "USD/year")
+)
+
+# ==== helpers / palette ====
+if (!exists("palette_global")) palette_global <- c("Data" = "blue4", "Simulation" = "blue")
+
+if (!exists("format_kmb")) {
+  format_kmb <- function(x) {
+    ifelse(abs(x) >= 1e9, paste0(round(x / 1e9, 1), "B"),
+    ifelse(abs(x) >= 1e6, paste0(round(x / 1e6, 1), "M"),
+    ifelse(abs(x) >= 1e3, paste0(round(x / 1e3, 1), "K"),
+           as.character(round(x, 1)))))
+  }
+}
+
+wrap_preserve <- function(x, width = 28) {
+  parts <- strsplit(x, "\n", fixed = TRUE)[[1]]
+  paste(vapply(parts, stringr::str_wrap, character(1), width = width), collapse = "\n")
+}
+
+get_title <- function(g) {
+  i <- match(g, labels_tbl$group)
+  if (is.na(i)) paste0("Group ", g) else labels_tbl$title[i]
+}
+get_ylab <- function(g) {
+  i <- match(g, labels_tbl$group)
+  if (is.na(i)) "Value" else labels_tbl$ylab[i]
+}
+
+# ==== choose groups (exact order from labels_tbl; only those with both series) ====
+partial_counts <- df_partial %>%
+  dplyr::distinct(group, type) %>%
+  dplyr::count(group, type, name = "n_series") %>%
+  tidyr::pivot_wider(names_from = type, values_from = n_series, values_fill = 0)
+
+groups_with_both <- partial_counts %>%
+  dplyr::filter(data >= 1, simulation >= 1) %>%
+  dplyr::pull(group)
+
+groups_partial <- labels_tbl$group[labels_tbl$group %in% groups_with_both] %>% head(4)
+if (length(groups_partial) < 4) message("Only ", length(groups_partial), " groups available with both series.")
+
+# ==== build plots (no R² in partial) ====
+plots_partial <- purrr::map(groups_partial, function(g) {
+  gdat    <- dplyr::filter(df_partial, group == g)
+  raw_sub <- dplyr::filter(gdat, type == "data")       %>% dplyr::transmute(Time = time, value)
+  sim_sub <- dplyr::filter(gdat, type == "simulation") %>% dplyr::transmute(Time = time, value)
+
+  ggplot2::ggplot() +
+    ggplot2::geom_line (data = sim_sub, ggplot2::aes(Time, value, color = "Simulation"), linewidth = 1) +
+    ggplot2::geom_point(data = raw_sub, ggplot2::aes(Time, value, color = "Data"), size = 2) +
+    ggplot2::scale_y_continuous(labels = format_kmb) +
+    ggplot2::scale_x_continuous(limits = c(1995, 2024)) +
+    ggplot2::scale_color_manual(NULL, values = palette_global,
+                                breaks = c("Data","Simulation"), drop = FALSE) +
+    ggplot2::guides(color = ggplot2::guide_legend(
+      override.aes = list(linetype = c(0, 1), shape = c(16, NA))
+    )) +
+    ggplot2::theme_classic(base_size = 9) +
+    ggplot2::theme(legend.position = "bottom") +
+    ggplot2::labs(
+      title = wrap_preserve(get_title(g), width = 28),
+      x = "Year",
+      y = get_ylab(g)
+    )
+})
+
+# ==== assemble as 2x2 with ONE legend + custom global title ====
+partial_grid <- patchwork::wrap_plots(plots_partial, ncol = 2, guides = "collect") &
+  ggplot2::theme(legend.position = "bottom")
+
+partial_grid <- partial_grid + patchwork::plot_annotation(
+  title = global_title
+)
+
+print(partial_grid)
+
+
+```
+
+
+```{r}
+
+
+
+.compute_more_metrics <- function(dat) {
+  if (nrow(dat) == 0) {
+    return(tibble(
+      N_pairs = 0,
+      MAE = NA_real_, RMSE = NA_real_,
+      NRMSE_mean_percent = NA_real_, NRMSE_range_percent = NA_real_,
+      SMAPE_percent = NA_real_, MPE_percent = NA_real_, Bias_ME = NA_real_,
+      Pearson_r = NA_real_, Spearman_rho = NA_real_,
+      Theils_U2 = NA_real_,
+      Um = NA_real_, Us = NA_real_, Uc = NA_real_
+    ))
+  }
+
+  A <- dat$value_actual
+  F <- dat$value_pred
+
+  err   <- F - A
+  aerr  <- abs(err)
+  sqerr <- err^2
+
+  mae  <- mean(aerr, na.rm = TRUE)
+  rmse <- sqrt(mean(sqerr, na.rm = TRUE))
+  mse  <- mean(sqerr, na.rm = TRUE)
+
+  meanA <- mean(A, na.rm = TRUE); meanF <- mean(F, na.rm = TRUE)
+  sdA   <- stats::sd(A, na.rm = TRUE); sdF <- stats::sd(F, na.rm = TRUE)
+  rPF   <- suppressWarnings(cor(A, F, use = "complete.obs", method = "pearson"))
+
+  # Normalizations
+  meanA_abs <- mean(abs(A), na.rm = TRUE)
+  rangeA    <- (max(A, na.rm = TRUE) - min(A, na.rm = TRUE))
+  nrmse_mean  <- if (is.finite(meanA_abs) && meanA_abs != 0) rmse / meanA_abs * 100 else NA_real_
+  nrmse_range <- if (is.finite(rangeA) && rangeA != 0) rmse / rangeA * 100 else NA_real_
+
+  # SMAPE (%)
+  smape_denom <- (abs(A) + abs(F)) / 2
+  smape <- mean(ifelse(smape_denom == 0, 0, abs(A - F) / smape_denom), na.rm = TRUE) * 100
+
+  # MPE (%) and Bias (ME)
+  mpe <- mean(ifelse(A == 0, NA_real_, (F - A) / A), na.rm = TRUE) * 100
+  mbe <- mean(err, na.rm = TRUE)
+
+  # Spearman
+  spearman <- suppressWarnings(cor(A, F, use = "complete.obs", method = "spearman"))
+
+  # Theil’s U2 vs naïve (random walk on actuals)
+  dat_ord <- dat[order(dat$Time), ]
+  A_ord <- dat_ord$value_actual; F_ord <- dat_ord$value_pred
+  theils_u2 <- if (length(A_ord) >= 2) {
+    num <- sqrt(mean((F_ord[-1] - A_ord[-1])^2, na.rm = TRUE))
+    den <- sqrt(mean((A_ord[-1] - A_ord[-length(A_ord)])^2, na.rm = TRUE))
+    if (den == 0) NA_real_ else num / den
+  } else NA_real_
+
+  # ---- Theil's MSE decomposition: Um, Us, Uc ----
+  if (is.na(mse) || mse == 0) {
+    Um <- Us <- Uc <- NA_real_
+  } else {
+    Um <- ((meanF - meanA)^2) / mse
+    Us <- ((sdF   - sdA  )^2) / mse
+    # guard rPF, sdA/F possibly NA or 0
+    cov_part <- if (is.na(rPF) || is.na(sdA) || is.na(sdF)) NA_real_ else 2 * (1 - rPF) * sdA * sdF
+    Uc <- if (is.na(cov_part)) NA_real_ else cov_part / mse
+  }
+
+  tibble(
+    N_pairs = nrow(dat),
+    MAE = mae, RMSE = rmse,
+    NRMSE_mean_percent = nrmse_mean,
+    NRMSE_range_percent = nrmse_range,
+    SMAPE_percent = smape,
+    MPE_percent = mpe,
+    Bias_ME = mbe,
+    Pearson_r = rPF,
+    Spearman_rho = spearman,
+    Theils_U2 = theils_u2,
+    Um = Um, Us = Us, Uc = Uc
+  )
+}
+
+metrics_tbl <- purrr::map_dfr(groups_full, function(g) {
+  gdat    <- dplyr::filter(df_full, group == g)
+  raw_sub <- dplyr::filter(gdat, type == "data")       %>% dplyr::transmute(Time = time, value)
+  sim_sub <- dplyr::filter(gdat, type == "simulation") %>% dplyr::transmute(Time = time, value)
+
+  joined <- dplyr::inner_join(
+    raw_sub %>% rename(value_actual = value),
+    sim_sub %>% rename(value_pred   = value),
+    by = "Time"
+  )
+
+  mape_val <- if (nrow(joined)) mape_integer_years(raw_sub, sim_sub) else NA_real_
+  r2_val   <- if (nrow(joined)) r2_integer_years(raw_sub, sim_sub)   else NA_real_
+
+  more <- .compute_more_metrics(joined)
+
+  tibble(
+    group = g,
+    title = get_title(g),
+    ylab  = get_ylab(g),
+    N_pairs = more$N_pairs,
+    MAPE_percent = mape_val,
+    SMAPE_percent = more$SMAPE_percent,
+    MAE = more$MAE,
+    RMSE = more$RMSE,
+    NRMSE_mean_percent = more$NRMSE_mean_percent,
+    NRMSE_range_percent = more$NRMSE_range_percent,
+    MPE_percent = more$MPE_percent,
+    Bias_ME = more$Bias_ME,
+    Pearson_r = more$Pearson_r,
+    Spearman_rho = more$Spearman_rho,
+    Theils_U2 = more$Theils_U2,
+    Um = more$Um, Us = more$Us, Uc = more$Uc,
+    R2 = r2_val
+  )
+})
+
+metrics_tbl_display <- metrics_tbl %>%
+  mutate(
+    across(c(MAPE_percent, SMAPE_percent, NRMSE_mean_percent, NRMSE_range_percent,
+             MPE_percent, R2, Pearson_r, Spearman_rho, Theils_U2, Um, Us, Uc),
+           ~ round(.x, 3)),
+    across(c(MAE, RMSE, Bias_ME), ~ round(.x, 2))
+  )
+
+print(metrics_tbl_display, n = nrow(metrics_tbl_display))
+# readr::write_csv(metrics_tbl_display, "metrics_full_calibration.csv")
+
+
+
+```
+
+
+
+```{r}
+
+write_csv(metrics_tbl_display, "metrics_full_calibration.csv")
+
+ggsave(
+  filename = "partial_grid.svg",
+  plot = partial_grid,
+  width = 8,
+  height = 6,
+  path = "C:/Users/zh096/OneDrive - Mass General Brigham/NIH budget cut/Writing and presentation/2. Model Paper/Journal version/Figures",
+  device = "svg"
+)
+
+ggsave(
+  filename = "full_grid.svg",
+  plot = full_grid,
+  width = 15,
+  height = 20,
+  path = "C:/Users/zh096/OneDrive - Mass General Brigham/NIH budget cut/Writing and presentation/2. Model Paper/Journal version/Figures",
+  device = "svg"
+)
+
+
+```

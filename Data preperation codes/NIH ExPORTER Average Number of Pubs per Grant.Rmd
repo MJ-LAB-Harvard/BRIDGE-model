@@ -1,0 +1,109 @@
+---
+title: "NIH ExPORTER Average Number of Pubs per Grant"
+author: "Hannah Lee"
+date: "2025-07-14"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lubridate)
+
+data_files <-  "C:\\Users\\path"
+```
+
+Activity codes for research project grants and organizational codes for NIH funding institutes.
+```{r}
+# Defined by NIH RePORT
+rpg_codes <- c(
+  "DP1","DP2","DP3","DP4","DP5",
+  "P01","PN1","PM1",
+  "R00","R01","R03","R15","R16","R21","R22","R23","R29","R33","R34","R35","R36","R37","R50","R55","R56","R61",
+  "RC1","RC2","RC3","RC4","RF1",
+  "RL1","RL2","RL9","RM1","SI2",
+  "UA5","UC1","UC2","UC3","UC4","UC7","UF1","UG3",
+  "UH2","UH3","UH5","UM1","UM2",
+  "U01","U19","U34","U3R"
+)
+
+# Limited to research project grants funded by NIH Funding Institutes
+# Source: https://www.era.nih.gov/files/Deciphering_NIH_Application.pdf
+organizational_codes <- c(
+  "TW", "TR", "AT", "CA", "EY", "HG", "HL", "AG", "AA", "AI", "AR", "EB", 
+  "HD", "DA", "DC", "DE", "DK", "ES", "GM", "MH", "MD", "NS", "NR", "LM"
+)
+```
+
+Import and bind all csv files.
+```{r}
+# Get file path of all NIH Grant data files
+NIH_data_files_list <- list.files(path = paste0(data_files, "NIH ExPORTER\\"), pattern = "^RePORTER_PRJ_C_FY\\d{4}\\.csv$", full.names = TRUE)
+
+# Read and bind all NIH Grant data files
+NIH_data <- NIH_data_files_list %>%
+  set_names() %>%
+  map_dfr(~ suppressWarnings(read_csv(.x, col_types = cols(.default = "c"), guess_max = 100000))) %>% 
+  mutate(FY = as.integer(FY))  %>%
+  filter(ACTIVITY %in% rpg_codes) %>%
+  filter(ADMINISTERING_IC %in% organizational_codes)
+
+# Get file path of all NIH publication data files
+pubs_data_files_list <- list.files(path = paste0(data_files, "NIH ExPORTER Link Tables\\"), pattern = "^RePORTER_PUBLNK_C_\\d{4}\\.csv$", full.names = TRUE)
+
+# Read and bind all NIH publication data files
+NIH_pubs <- pubs_data_files_list %>%
+    set_names() %>%
+    map_dfr(~ suppressWarnings(read_csv(.x, col_types = cols(.default = "c"))))
+```
+
+Clean data.
+```{r}
+NIH_data$PROJECT_START <- parse_date_time(NIH_data$PROJECT_START, orders = c("mdY", "Ymd"))
+NIH_data$PROJECT_END   <- parse_date_time(NIH_data$PROJECT_END, orders = c("mdY", "Ymd"))
+
+
+NIH_data_cleaned <- NIH_data %>%
+  select(CORE_PROJECT_NUM, PROJECT_START, PROJECT_END) %>%
+  filter(!is.na(PROJECT_START) & !is.na(PROJECT_END)) %>%
+  rename(PROJECT_NUMBER = CORE_PROJECT_NUM) %>%
+  group_by(PROJECT_NUMBER) %>%
+  summarise(
+    PROJECT_START = first(PROJECT_START),
+    PROJECT_END= first(PROJECT_END),
+    .groups = "drop"
+)
+```
+
+Merge datasets.
+```{r}
+pubs_projects <- NIH_pubs %>%
+  inner_join(NIH_data_cleaned, by = "PROJECT_NUMBER")
+```
+
+Number of articles per grant.
+```{r}
+articles_per_project <- pubs_projects %>%
+  group_by(PROJECT_NUMBER) %>%
+  summarise(
+    article_count = n(),
+    PROJECT_START = first(PROJECT_START),
+    duration_years = first(as.numeric(difftime(PROJECT_END, PROJECT_START, units = "days")) / 365.25)
+  ) %>%
+  filter(duration_years > 0) %>%
+  mutate(articles_per_year = article_count / duration_years,
+         start_year = lubridate::year(PROJECT_START))
+```
+
+```{r}
+articles_by_start_year <- articles_per_project %>%
+  group_by(start_year) %>%
+  summarise(
+    avg_articles_per_grant_per_year = mean(articles_per_year, na.rm = TRUE),
+    grants_in_year = n()
+  )
+```
+

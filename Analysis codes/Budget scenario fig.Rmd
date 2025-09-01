@@ -1,0 +1,259 @@
+---
+title: "Budget fig"
+author: "Zeynep Hasgul"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(scales) 
+library(patchwork)
+
+
+raw_data <-  read_excel("C:/Users/path/Data for method figure.xlsx", sheet = "Budget")
+
+
+names(raw_data)[1] <- "variable"
+
+
+df <- raw_data
+
+
+```
+
+
+
+```{r}
+
+# --- Step 1: Reshape and clean data ---
+df_long <- df %>%
+  pivot_longer(
+    cols = -variable,
+    names_to = "year",
+    values_to = "value"
+  ) %>%
+  mutate(
+    year = as.numeric(year),
+    type = case_when(
+      str_detect(variable, "Adjusted") ~ "Adjusted",
+      str_detect(variable, "Nominal") ~ "Nominal"
+    ),
+    Scenario = case_when(
+      str_detect(variable, "base") ~ "Baseline",
+      str_detect(variable, "4yr")  ~ "4-year restore",
+      str_detect(variable, "1yr")  ~ "1-year restore",
+      str_detect(variable, "cut")  ~ "Cut",
+      str_detect(variable, "low")  ~ "No-increase"               
+    ),
+    type = factor(type, levels = c("Nominal", "Adjusted"))
+  )
+
+historic_rows <- df_long %>%
+  filter(Scenario == "Baseline") %>%
+  mutate(
+    Scenario = "Historic",
+    value = if_else(year <= 2026, value, NA_real_)
+  )
+
+base_updated <- df_long %>%
+  filter(Scenario == "Baseline") %>%
+  mutate(value = if_else(year >= 2026, value, NA_real_))
+
+cut_updated <- df_long %>%
+  filter(Scenario == "Cut") %>%
+  mutate(value = if_else(year >= 2026, value, NA_real_))
+
+restore_4yr_updated <- df_long %>%
+  filter(Scenario == "4-year restore") %>%
+  mutate(value = if_else(year >= 2026, value, NA_real_))
+
+restore_1yr_updated <- df_long %>%
+  filter(Scenario == "1-year restore") %>%
+  mutate(value = if_else(year >= 2026, value, NA_real_))
+
+low_updated <- df_long %>%                                  
+  filter(Scenario == "No-increase") %>%
+  mutate(value = if_else(year >= 2026, value, NA_real_))
+
+# Combine all
+df_long <- bind_rows(
+  historic_rows,
+  base_updated,
+  restore_1yr_updated,
+  restore_4yr_updated,
+  cut_updated,
+  low_updated                                            
+)
+
+# (Optional) draw "Cut" above others
+df_long <- df_long %>%
+  mutate(order = case_when(
+    Scenario == "Cut" ~ 2,   # fixed label
+    TRUE ~ 1
+  )) %>%
+  arrange(type, order)
+
+
+```
+
+
+
+```{r}
+y_limits <- c(10e9, 95e9)
+
+# ---- NOMINAL plot ----
+p_nominal <- ggplot() +
+  # Historic (not in legend)
+  geom_line(
+    data = df_long %>% filter(type == "Nominal", Scenario == "Historic"),
+    aes(x = year, y = value, group = Scenario),
+    color = "#7F7F7F", linetype = "solid", size = 1.2, alpha = 1, show.legend = FALSE
+  ) +
+  # Other Scenarios
+  geom_line(
+    data = df_long %>% filter(type == "Nominal", Scenario %in% c("Baseline", "1-year restore", "4-year restore", "No-increase")),
+    aes(x = year, y = value, color = Scenario, linetype = Scenario, alpha = Scenario, group = Scenario),
+    size = 1, na.rm = TRUE
+  ) +
+  # Plot Cut last, on top
+  geom_line(
+    data = df_long %>% filter(type == "Nominal", Scenario == "Cut"),
+    aes(x = year, y = value, color = Scenario, linetype = Scenario, alpha = Scenario, group = Scenario),
+    size = 1, na.rm = TRUE
+  ) +
+  scale_color_manual(values = c(
+    "Baseline" =  "#7F7F7F",
+    "1-year restore" = "#00B972",
+    "4-year restore" = "#4DA6FF",
+    "Cut" = "#FF8543",
+    "No-increase" = "#9A6AFF"                                # <- NEW color
+  )) +
+  scale_linetype_manual(values = c(
+    "Baseline" = "dotted",
+    "1-year restore" = "solid",
+    "4-year restore" = "solid",
+    "Cut" = "solid",
+    "No-increase" = "solid"                                  # <- NEW linetype
+  )) +
+  scale_alpha_manual(values = c(
+    "Baseline" = 1,
+    "1-year restore" = 0.6,
+    "4-year restore" = 0.6,
+    "Cut" = 0.8,
+    "No-increase" = 0.6                                      # <- NEW alpha
+  )) +
+   scale_y_continuous(
+    limits = y_limits,
+    breaks = seq(10e9, 95e9, by = 10e9),   # <- same breaks
+    labels = scales::label_number(scale = 1e-9, suffix = "B")
+  ) +
+  scale_x_continuous(limits = c(1995, 2050), breaks = seq(1995, 2050, by = 5)) +
+  labs(
+    title = "A) Nominal annual congressional appropriations",
+    x = "Year",
+    y = "NIH budget (in Billion USD)"
+  ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0, face = "bold"), legend.position = "none")
+
+# ---- ADJUSTED plot ----
+p_adjusted <- ggplot() +
+  # Historic (not in legend)
+  geom_line(
+    data = df_long %>% filter(type == "Adjusted", Scenario == "Historic"),
+    aes(x = year, y = value, group = Scenario),
+    color =  "#7F7F7F", linetype = "solid", size = 1.2, alpha = 1, show.legend = FALSE
+  ) +
+
+  geom_line(
+    data = df_long %>% filter(type == "Adjusted", Scenario %in% c("Baseline", "1-year restore", "4-year restore", "No-increase")),
+    aes(x = year, y = value, color = Scenario, linetype = Scenario, alpha = Scenario, group = Scenario),
+    size = 1, na.rm = TRUE
+  ) +
+  # Plot Cut last, on top
+  geom_line(
+    data = df_long %>% filter(type == "Adjusted", Scenario == "Cut"),
+    aes(x = year, y = value, color = Scenario, linetype = Scenario, alpha = Scenario, group = Scenario),
+    size = 1, na.rm = TRUE
+  ) +
+  scale_color_manual(values = c(
+    "Baseline" =  "#7F7F7F",
+    "1-year restore" = "#00B972",
+    "4-year restore" = "#4DA6FF",
+    "Cut" = "#FF8543",
+    "No-increase" = "#9A6AFF"
+  )) +
+  scale_linetype_manual(values = c(
+    "Baseline" = "dotted",
+    "1-year restore" = "solid",
+    "4-year restore" = "solid",
+    "Cut" = "solid",
+    "No-increase" = "solid"
+  )) +
+  scale_alpha_manual(values = c(
+    "Baseline" = 1,
+    "1-year restore" = 0.6,
+    "4-year restore" = 0.6,
+    "Cut" = 0.8,
+    "No-increase" = 0.6
+  )) +
+    scale_y_continuous(
+    limits = y_limits,
+    breaks = seq(10e9, 95e9, by = 10e9),   # <- same breaks
+    labels = scales::label_number(scale = 1e-9, suffix = "B")
+  ) +
+  scale_x_continuous(limits = c(1995, 2050), breaks = seq(1995, 2050, by = 5)) +
+  labs(
+    title = "B) Annual congressional appropriations adjusted to 2025 USD",
+    x = "Year",
+    y = "NIH budget (in 2025 USD)"
+  ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0, face = "bold"),legend.position = "bottom")
+  
+
+```
+
+
+```{r}
+
+combined_plot <- p_nominal / p_adjusted +
+  plot_layout(guides = "collect") &
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.text = element_text(size = 10),
+    legend.margin = margin(t = 2, b = 2, unit = "pt")
+  ) &
+  guides(color = guide_legend(nrow = 2, byrow = TRUE))
+
+
+
+```
+
+```{r fig.width=7, fig.height=6}
+
+print(combined_plot)
+
+```
+
+
+```{r}
+
+ggsave(
+  filename = "nih_budget_scenarios.svg",
+  plot = combined_plot,
+  width = 7,     
+  height = 6,     
+  units = "in",
+  dpi = 300
+)
+
+
+```

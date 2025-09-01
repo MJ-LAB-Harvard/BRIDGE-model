@@ -1,0 +1,404 @@
+:GRAPH Doctoral_students_enrollement
+:TITLE Doctoral students enrollement
+:SCALE
+:VAR doctoral students enrollment
+:DATASET 
+:VAR DATA doctoral enrollment
+:DATASET 
+
+:GRAPH Total_doctoral_students
+:TITLE Total doctoral students
+:SCALE
+:VAR Doctoral students
+:DATASET 
+:VAR DATA total doctoral students
+:DATASET 
+
+:GRAPH Doctorate_recipients
+:TITLE Doctorate recipients
+:SCALE
+:VAR total doctoral attainment
+:DATASET 
+:VAR DATA doctoral recipients
+:DATASET 
+
+:GRAPH Postdoc_transition_from_doctoral
+:TITLE Postdoc transition from doctoral
+:SCALE
+:VAR postdoctoral appointment
+:DATASET 
+:VAR DATA postdoctoral appointment
+:DATASET 
+
+:GRAPH Industry_transition_from_doctoral
+:TITLE Industry transition from doctoral
+:SCALE
+:VAR grad school to industry
+:DATASET 
+:VAR DATA doctoral recipients securing industry positions
+:DATASET 
+
+:GRAPH Faculty_transition_from_doctoral
+:TITLE Faculty transition from doctoral
+:SCALE
+:VAR doctoral recipients transitioning to academic positions
+:DATASET 
+:VAR DATA doctoral recipients securing academic positions
+:DATASET 
+
+:GRAPH Total_post_docs
+:TITLE Total post docs
+:SCALE
+:VAR Post docs
+:DATASET 
+:VAR DATA total post docs
+:DATASET 
+
+:GRAPH Becoming_nonactive_after_first_grant
+:TITLE Becoming nonactive after first grant
+:SCALE
+:VAR becoming nonactive after first grant
+:DATASET 
+:VAR DATA becoming nonactive after first grant
+:DATASET 
+
+:GRAPH Total_first_time_PI
+:TITLE Total first time PI
+:SCALE
+:VAR First time project grant investigators
+:DATASET 
+:VAR DATA First time active PI
+:DATASET 
+
+:GRAPH Total_established_PIs
+:TITLE Total established PIs
+:SCALE
+:VAR Established project grant investigators
+:DATASET 
+:VAR DATA Established active PIs
+:DATASET 
+
+:GRAPH Total_industry_researchers
+:TITLE Total industry researchers
+:SCALE
+:VAR Researchers in industry
+:DATASET 
+:VAR DATA total doctorate holders in RD at industry
+:DATASET 
+
+:GRAPH Total_doctorate_holders_in_academia
+:TITLE Total doctorate holders in academia
+:SCALE
+:VAR total academic doctorate holders
+:DATASET 
+:VAR DATA total doctorate holders in RD at academia
+:DATASET 
+
+:GRAPH Competing_grant_budget
+:TITLE Budget for new awards
+:SCALE
+:VAR expenditures on new grants
+:DATASET 
+:VAR GET competing RPG budget in 2025 USD
+:DATASET 
+
+:GRAPH Noncompeting_grant_budget
+:TITLE Budget for ongoing awards
+:SCALE
+:VAR expenditures on awarded grants
+:DATASET 
+:VAR GET noncompeting RPG budget in 2025 USD
+:DATASET 
+
+:GRAPH New_grant_approvals
+:TITLE New grant approvals
+:SCALE
+:VAR new grant approvals
+:DATASET 
+:VAR DATA new grant approvals
+:DATASET 
+
+:GRAPH Total_active_grants
+:TITLE Total active grants
+:SCALE
+:VAR active NIH research grants
+:DATASET 
+:VAR DATA total awards
+:DATASET 
+
+:GRAPH NIH_supported_fundamental_research
+:TITLE NIH supported fundamental research
+:SCALE
+:VAR NIH supported fundamental knowledge development
+:DATASET 
+:VAR DATA NIH funded fundamental papers
+:DATASET 
+
+:GRAPH New_NIH_clinical_trials
+:TITLE New NIH clinical trials
+:SCALE
+:VAR NIH clinical trial registry
+:DATASET 
+:VAR DATA new clinical trials by NIH
+:DATASET 
+
+:GRAPH Total_active_clinical_trials
+:TITLE Total active clinical trials
+:SCALE
+:VAR clinical and applied research activity
+:DATASET 
+:VAR DATA active clinical trials registered
+:DATASET 
+
+:GRAPH New_drug_application_approvals
+:TITLE New drug application approvals
+:SCALE
+:VAR annual commercial innovations
+:DATASET 
+:VAR DATA new molecular entities and new biologics
+:DATASET 
+
+:GRAPH Plans_other_than_research
+:TITLE Plans other than research
+:SCALE
+:VAR doctoral recipients without definite plans after graduation and other sector jobs
+:DATASET 
+:VAR DATA doctoral recipients without definite plans after graduation and other sector jobs
+:DATASET 
+
+:GRAPH Dashboard_total_principal_investigators
+:TITLE Total principal investigators
+:SCALE
+:VAR total first time and established investigators
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH doctroal_students
+:TITLE Doctroal students
+:SCALE
+:VAR doctroal students
+:DATASET base
+:LINE-WIDTH 2
+:VAR doctroal students
+:DATASET cut
+:LINE-WIDTH 2
+:VAR doctroal students
+:DATASET cut_restore
+:LINE-WIDTH 2
+
+:GRAPH Doctroate_holders_in_industry
+:TITLE Doctroate holders in industry
+:SCALE
+:VAR Researchers in industry
+:DATASET base
+:LINE-WIDTH 2
+:VAR Researchers in industry
+:DATASET cut
+:LINE-WIDTH 2
+:VAR Researchers in industry
+:DATASET cut_restore
+:LINE-WIDTH 2
+:VAR Researchers in industry
+:DATASET analysis
+:LINE-WIDTH 2
+
+:GRAPH Dashboard_doctoral_students
+:TITLE Doctoral students
+:SCALE
+:VAR Doctoral students
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH Dashboard_novel_drug_approvals
+:TITLE Annual novel drug approvals
+:SCALE
+:VAR annual commercial innovations
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH Dashboard_NIH_supported_fundamental_papers
+:TITLE NIH-supported fundamental papers
+:SCALE
+:VAR NIH supported fundamental knowledge development
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH Dashboard_total_clinical_trials
+:TITLE Clinical trials
+:SCALE
+:VAR Total clinical trials
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH Dashboard_NIH_congressional_appropriations_in_2025_USD
+:TITLE NIH congressional appropriations in 2025 USD
+:SCALE
+:VAR NIH congressional appropriations in 2025 USD
+:DATASET base
+:LINE-WIDTH 2
+
+:GRAPH Active_NIH_clinical_trials
+:TITLE Active NIH clinical trials
+:SCALE
+:VAR NIH clinical trials
+:DATASET 
+:VAR DATA NIH active clinical trials registered
+:DATASET 
+
+:GRAPH Active_other_clinical_trials
+:TITLE Active other clinical trials
+:SCALE
+:VAR Clinical trials with industry funding
+:DATASET 
+:VAR DATA industry active clinical trials registered
+:DATASET 
+
+:GRAPH Pharma_industry_RD_expenditure
+:TITLE Pharma industry RD expenditure
+:SCALE
+:VAR pharma industry RD budget
+:DATASET 
+:VAR DATA pharma industry RD expenditure
+:DATASET 
+
+:GRAPH Dashboard_postdocs
+:TITLE Postdoctoral researchers
+:SCALE
+:VAR Post docs
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH Dashboard_active_NIH_research_grants
+:TITLE Active NIH research grants
+:SCALE
+:VAR active NIH research grants
+:DATASET 
+:LINE-WIDTH 2
+
+:GRAPH Transition_to_first_time_PI
+:TITLE Transition to first time PI
+:SCALE
+:VAR obtaining initial grant
+:DATASET 
+:VAR DATA obtaining initial grant
+:DATASET 
+
+:GRAPH Obtaining_more_than_single_grant
+:TITLE Obtaining more than single grant
+:SCALE
+:VAR obtaining more than single grant in the first round
+:DATASET 
+:VAR DATA obtaining more than single grant in the first round
+:DATASET 
+
+:GRAPH Established_by_grant_duration
+:TITLE Established by grant duration
+:SCALE
+:VAR established PI by grant duration
+:DATASET 
+:VAR DATA established PI by grant duration
+:DATASET 
+
+:GRAPH Return_to_PI_after_non_active
+:TITLE Return to PI after non active
+:SCALE
+:VAR return to PI rate
+:DATASET 
+:VAR DATA return to PI
+:DATASET 
+
+:GRAPH Established_having_funding_gap
+:TITLE Established PI having funding gap
+:SCALE
+:VAR established PI having funding gap
+:DATASET 
+:VAR DATA established PI having funding gap
+:DATASET 
+
+:GRAPH First_time_PI_getting_following_grant
+:TITLE First time PI getting following grant
+:SCALE
+:VAR getting new grant after the first
+:DATASET 
+:VAR DATA getting new grant after the first
+:DATASET 
+
+:GRAPH Sum_of_non_PI_and_non_active_PI
+:TITLE Sum of non PI and non active PI
+:SCALE
+:VAR sum of non PI and non active PI
+:DATASET 
+:VAR DATA sum of non PI and non active PI
+:DATASET 
+
+:GRAPH Nonactive_prior_PI_cummulative
+:TITLE Nonactive prior PI cummulative
+:SCALE
+:VAR Cummulative prior PIs with no active grants
+:DATASET 
+:VAR DATA Nonactive prior PI cummulative
+:DATASET 
+
+:GRAPH total_RPG_applications
+:TITLE total RPG applications
+:SCALE
+:VAR total RPG applications
+:DATASET 
+:VAR DATA RPG applications
+:DATASET 
+
+:GRAPH first_time_contact_applied_per_year
+:TITLE first time contact applied per year
+:SCALE
+:VAR first time project grant investigators applied per year
+:DATASET 
+:VAR DATA first time project grant investigators applied per year
+:DATASET 
+
+:GRAPH applications_by_first_time_PI
+:TITLE applications by first time PI
+:SCALE
+:VAR applications by first time PI
+:DATASET 
+:VAR DATA applications by first time PI
+:DATASET 
+
+:GRAPH applications_by_established_PI
+:TITLE applications by established PI
+:SCALE
+:VAR applications by established PI
+:DATASET 
+:VAR DATA applications by established PI
+:DATASET 
+
+:GRAPH established_contact_applied
+:TITLE established contact applied
+:SCALE
+:VAR established project grant investigators applied per year
+:DATASET 
+:VAR DATA established project grant investigators applied per year
+:DATASET 
+
+:GRAPH success_rate
+:TITLE success rate
+:SCALE
+:VAR application success rate
+:DATASET 
+:VAR DATA grant success rate
+:DATASET 
+
+:GRAPH _publication_per_grant_per_year
+:TITLE publication per grant per year
+:SCALE
+:VAR implied publication per grant per year
+:DATASET 
+:VAR DATA publication per grant per year
+:DATASET 
+
+:GRAPH Cummulative_drug_approvals
+:TITLE Cummulative drug approvals
+:SCALE
+:VAR cumulative commercial innovations
+:DATASET 
+:VAR DATA cummulative approvals
+:DATASET 
