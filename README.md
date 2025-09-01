@@ -1,49 +1,61 @@
-# BRIDGE-model
+# BRIDGE-model  
 
-**BRIDGE (Biomedical Research Investment Dynamics and Growth Evaluation)** is a system dynamics simulation model linking NIH budgets to the research workforce, research outputs, and novel drug development.
-
----
-
-## Repository Contents
-
-This repository contains the **Vensim model file, datasets, replication files, and analysis codes** used in the study. It enables researchers to:
-- Reproduce all results presented in the accompanying manuscript and supplement.
-- Modify parameters and structures to explore alternative assumptions.
-- Extend the framework for related questions in science policy and biomedical innovation.
-
-The repository supports transparency, reproducibility, and extensibility of the BRIDGE model.
+**BRIDGE (Biomedical Research Investment Dynamics and Growth Evaluation)** is a system dynamics simulation model linking NIH budgets to the research workforce, research outputs, and novel drug development.  
 
 ---
 
-## Publication
+## Repository Contents  
 
-This work is supported by the associated publication:  
+This repository contains the **Vensim model file, datasets, replication files, and analysis code** used in the study. It enables researchers to:  
+- Reproduce all results presented in the manuscript and Supplementary Information.  
+- Modify parameters and structures to explore alternative assumptions.  
+- Extend the framework for related questions in science policy and biomedical innovation.  
 
-📄 **[Title of the Manuscript]**  
-*Link will be added here once the paper is published.*
+This repository aims for transparency, reproducibility, and extensibility of the BRIDGE model.  
 
 ---
 
-## Online Simulator
+## Publication  
+
+📄 **The Aftershock: The Impact of Budget Reductions at the U.S. National Institutes of Health on Research and Innovation**  
+Hasgul, Lee, & Jalali (2025)  
+Available as preprint on SSRN: [https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5399303](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5399303)  
+
+*A link to the final journal publication will be added once available.*  
+
+---
+
+## Online Simulator  
 
 An interactive version of the BRIDGE model is available at:  
-🔗 [NIH Budget Simulator](https://mj-lab.mgh.harvard.edu/nih-budget-simulator/)
+🔗 [NIH Budget Simulator](https://mj-lab.mgh.harvard.edu/nih-budget-simulator/)  
 
-This simulator provides an **interactive interface** to the model, allowing users to:
-- Explore alternative NIH funding scenarios.
+This simulator provides an **interactive online interface** to:  
+- Test "what-if" scenarios.
 - Visualize projected impacts on the biomedical research workforce, research outputs, and innovation outcomes.  
-- Examine additional intermediate outcomes and sector dynamics not presented in the main text.  
+- Examine extended outcomes and scenarios not included in the main text.  
 
-It is designed as an **educational and policy exploration tool** for researchers, decision-makers, and the public.
+It is designed as a tool for **researchers, policymakers, and the public** to explore the long-term implications of NIH budget changes.  
 
 ---
 
-## How to Cite
+## Data Availability  
+
+All data sources, processed datasets, and replication files are publicly accessible. Details are provided in the manuscript and Supplementary Information.  
+
+- NIH funding data: NIH Office of Budget & NIH Data Book  
+- Workforce data: NSF GSS, SED, SDR surveys  
+- Innovation data: PubMed, ClinicalTrials.gov, FDA records  
+- Population data: U.S. Census Bureau  
+
+Replication datasets and model files are hosted in this repository.  
+
+---
+
+## How to Cite  
 
 If you use this model, data, or simulator in your research, please cite:  
 
-> **[Authors, Year].** *Title of the associated manuscript.* [Journal/Preprint, link to be added once published].  
+> Hasgul, Lee, & Jalali (2025). *The Aftershock: The Impact of Budget Reductions at the U.S. National Institutes of Health on Research and Innovation.* SSRN.  
 > GitHub Repository: [https://github.com/your-org/BRIDGE-model](https://github.com/your-org/BRIDGE-model)  
-> Online Simulator: [NIH Budget Simulator](https://mj-lab.mgh.harvard.edu/nih-budget-simulator/)
-
-
+> Online Simulator: [NIH Budget Simulator](https://mj-lab.mgh.harvard.edu/nih-budget-simulator/)  
