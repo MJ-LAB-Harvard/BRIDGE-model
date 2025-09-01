@@ -6,7 +6,7 @@
 
 ## Repository Contents
 
-This repository contains the **Vensim model file, input datasets, replication files, and codes** used in the analysis. It enables researchers to:
+This repository contains the **Vensim model file, datasets, replication files, and analysis codes** used in the study. It enables researchers to:
 - Reproduce all results presented in the accompanying manuscript and supplement.
 - Modify parameters and structures to explore alternative assumptions.
 - Extend the framework for related questions in science policy and biomedical innovation.
