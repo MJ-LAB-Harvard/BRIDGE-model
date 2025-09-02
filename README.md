@@ -1,13 +1,13 @@
 # BRIDGE-model  
 
-**BRIDGE (Biomedical Research Investment Dynamics and Growth Evaluation)** is a system dynamics simulation model linking NIH budgets to the research workforce, research outputs, and novel drug development.  
+**BRIDGE (Biomedical Research Investment Dynamics and Growth Evaluation)** is a system dynamics simulation model linking NIH budgets to the U.S. research workforce, research outputs, and novel drug development.  
 
 ---
 
 ## Repository Contents  
 
 This repository contains the **Vensim model file, datasets, replication files, and analysis code** used in the study. It enables researchers to:  
-- Reproduce all results presented in the manuscript and Supplementary Information.  
+- Reproduce all results presented in the manuscript and its supplement.  
 - Modify parameters and structures to explore alternative assumptions.  
 - Extend the framework for related questions in science policy and biomedical innovation.  
 
