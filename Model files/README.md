@@ -12,8 +12,8 @@ For Vensim software downloads:
 
 ## File Descriptions
 
-- **NIH-model.mdl / NIH-model.2mdl**  
-  The main Vensim model file and its backup. These contain the system dynamics structure, equations, and relationships that define the BRIDGE model.  
+- **NIH-model.mdl**  
+  The main Vensim model file. These contain the system dynamics structure, equations, and feedback loops that define the BRIDGE model.  
 
 - **DATA.vdfx**  
   A Vensim data file containing historical input series used to calibrate and initialize the model.  
