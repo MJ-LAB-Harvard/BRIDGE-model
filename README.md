@@ -33,8 +33,9 @@ An interactive version of the BRIDGE model is available at:
 This simulator provides an **interactive online interface** to:  
 - Test "what-if" scenarios.
 - Visualize projected impacts on the biomedical research workforce, research outputs, and innovation outcomes.  
-- Examine extended outcomes and scenarios not included in the main text.  
-
+- Examine extended outcomes and scenarios not included in the main text.
+- 
+**Note:** Running the model requires **Vensim DSS** software however, the online simulator is open.  
 It is designed as a tool for **researchers, policymakers, and the public** to explore the long-term implications of NIH budget changes.  
 
 ---
@@ -55,6 +56,7 @@ Replication datasets and model files are hosted in this repository.
 ## How to Cite  
 
 If you use this model, data, or simulator in your research, please cite:  
+**Note:** This is a preprint, and has not been peer reviewed yet.
 
 > Hasgul, Lee, & Jalali (2025). *The Aftershock: The Impact of Budget Reductions at the U.S. National Institutes of Health on Research and Innovation.* SSRN.  
 > GitHub Repository: [https://github.com/your-org/BRIDGE-model](https://github.com/your-org/BRIDGE-model)  
