@@ -52,7 +52,7 @@ All data sources, processed datasets, and replication files are publicly accessi
 - Innovation data: PubMed, NIH ExPORTER, ClinicalTrials.gov, FDA records  
 - Population data: U.S. Census Bureau  
 
-The data imported into the model, as well as the data analysis codes, are hosted in this repository.  
+The data imported into the model, as well as the data preparation codes, are hosted in this repository.  
 
 ---
 
