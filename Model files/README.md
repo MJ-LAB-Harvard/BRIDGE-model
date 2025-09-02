@@ -1,4 +1,4 @@
-# BRIDGE-model (Subfolder README)
+# Running the BRIDGE-model
 
 This folder contains the files necessary to run the **BRIDGE (Biomedical Research Investment Dynamics and Growth Evaluation)** model.  
 
