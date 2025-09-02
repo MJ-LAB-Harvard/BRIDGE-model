@@ -34,9 +34,9 @@ This simulator provides an **interactive online interface** to:
 - Test "what-if" scenarios.
 - Visualize projected impacts on the biomedical research workforce, research outputs, and innovation outcomes.  
 - Examine extended outcomes and scenarios not included in the main text.
-- 
+  
 **Note:** Running the model files here requires **Vensim DSS** software however, the online simulator is open-acess.  
-It is designed as an interactive tool for **researchers, policymakers, and the public** to explore the long-term implications of changes to the NIH budget.  
+In the background, the online simulator runs the model. It is designed as an interactive tool for **researchers, policymakers, and the public** to explore the long-term implications of changes to the NIH budget without software requirements.  
 
 ---
 
