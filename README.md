@@ -35,8 +35,9 @@ This simulator provides an **interactive online interface** to:
 - Visualize projected impacts on the biomedical research workforce, research outputs, and innovation outcomes.  
 - Examine extended outcomes and scenarios not included in the main text.
   
-**Note:** The free personal learning edition of Vensim allows users to open the model and explore its structure and equations. Yet, locally running the model files in this repository requires **Vensim DSS** software. 
-However, the **online simulator** is **open-access**. It runs the model in the background and displays results in real time through an interactive web interface.  
+**Note:** 
+- The free personal learning edition of Vensim allows users to open the model and explore its structure and equations. Yet, locally running the model files in this repository requires **Vensim DSS** software. 
+- However, the **online simulator** is **open-access**. It runs the model in the background and displays results in real time through an interactive web interface.  
 The online tool is designed as an interactive platform for **researchers, policymakers, and the public** to explore the long-term implications of changes to the NIH budget without any software requirements.  
 
 ---
