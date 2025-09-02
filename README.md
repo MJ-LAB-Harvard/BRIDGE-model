@@ -59,6 +59,7 @@ The data imported into the model, as well as the data preparation codes, are hos
 ## How to Cite  
 
 **Note:** This is a preprint, and has not been peer reviewed yet.
+
 However, if you use this model, data, or codes in your research, please consider citing:  
 
 > Hasgul, Lee, & Jalali (2025). *The Aftershock: The Impact of Budget Reductions at the U.S. National Institutes of Health on Research and Innovation.* SSRN.  
