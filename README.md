@@ -35,8 +35,8 @@ This simulator provides an **interactive online interface** to:
 - Visualize projected impacts on the biomedical research workforce, research outputs, and innovation outcomes.  
 - Examine extended outcomes and scenarios not included in the main text.
 - 
-**Note:** Running the model requires **Vensim DSS** software however, the online simulator is open.  
-It is designed as a tool for **researchers, policymakers, and the public** to explore the long-term implications of NIH budget changes.  
+**Note:** Running the model files here requires **Vensim DSS** software however, the online simulator is open-acess.  
+It is designed as an interactive tool for **researchers, policymakers, and the public** to explore the long-term implications of changes to the NIH budget.  
 
 ---
 
@@ -45,11 +45,11 @@ It is designed as a tool for **researchers, policymakers, and the public** to ex
 All data sources, processed datasets, and replication files are publicly accessible. Details are provided in the manuscript and Supplementary Information.  
 
 - NIH funding data: NIH Office of Budget & NIH Data Book  
-- Workforce data: NSF GSS, SED, SDR surveys  
-- Innovation data: PubMed, ClinicalTrials.gov, FDA records  
+- Workforce data: NSF GSS, SED, SDR surveys, and NIH ExPORTER
+- Innovation data: PubMed, NIH ExPORTER, ClinicalTrials.gov, FDA records  
 - Population data: U.S. Census Bureau  
 
-Replication datasets and model files are hosted in this repository.  
+The data imported into the model, as well as the data analysis codes, are hosted in this repository.  
 
 ---
 
